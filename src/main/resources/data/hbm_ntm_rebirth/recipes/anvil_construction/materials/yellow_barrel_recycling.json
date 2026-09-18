@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:yellow_barrel"
+    }
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:tank_steel"
+    },
+    {
+      "item": "hbm_ntm_rebirth:plate_lead",
+      "count": 2
+    },
+    {
+      "item": "hbm_ntm_rebirth:nuclear_waste",
+      "count": 10
+    }
+  ],
+  "tier_lower": 3,
+  "overlay": "recycling"
+}

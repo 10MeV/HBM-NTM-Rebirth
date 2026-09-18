@@ -1,6 +1,7 @@
 package com.hbm.ntm.item;
 
 import com.hbm.ntm.api.block.HbmPersistentBlockState;
+import com.hbm.ntm.block.LegacyStandardInfoTooltip;
 import com.hbm.ntm.multiblock.LegacyMultiblockPlaceable;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
@@ -38,13 +39,7 @@ public class MultiblockBlockItem extends BlockItem {
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
-        String key = getDescriptionId() + ".desc";
-        Component description = Component.translatable(key);
-        if (!description.getString().equals(key)) {
-            for (String line : description.getString().split("\\$")) {
-                tooltip.add(Component.literal(line));
-            }
-        }
+        LegacyStandardInfoTooltip.appendDirectDescriptionIfNotHandled(tooltip, getDescriptionId() + ".desc");
     }
 
     @Override

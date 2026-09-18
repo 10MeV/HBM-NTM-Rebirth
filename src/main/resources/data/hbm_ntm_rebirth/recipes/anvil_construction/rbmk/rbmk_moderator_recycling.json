@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:rbmk_moderator"
+    }
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:rbmk_blank"
+    },
+    {
+      "item": "hbm_ntm_rebirth:block_graphite",
+      "count": 4
+    }
+  ],
+  "tier_lower": 4,
+  "overlay": "recycling"
+}

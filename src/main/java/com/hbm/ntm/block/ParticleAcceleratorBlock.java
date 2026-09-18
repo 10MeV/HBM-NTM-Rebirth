@@ -114,7 +114,8 @@ public class ParticleAcceleratorBlock extends LegacyXrMultiblockBlock implements
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return LegacyMachineRenderShapes.chunkBakedStaticOrEntity();
+        // Every PA OBJ spans beyond the core's chunk render section; keep the full body in its finite-bounds BER.
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override

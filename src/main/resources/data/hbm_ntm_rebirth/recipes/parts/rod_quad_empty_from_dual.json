@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:rod_dual_empty" },
+    { "item": "hbm_ntm_rebirth:rod_dual_empty" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:rod_quad_empty" }
+}

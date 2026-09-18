@@ -275,14 +275,23 @@ public final class RBMKNeutronHandler {
                     moderateStream();
                 }
 
-                if (targetColumn instanceof RBMKFluxReceiver receiver) {
-                    if (type == RBMKType.ROD && targetColumn instanceof RBMKRodColumn rod && rod.hasFuelRod()) {
+                // The legacy RBMK columns used separate tile classes, so only
+                // fuel rods and outgassers implemented IRBMKFluxReceiver. The
+                // modern shared column BE implements every column interface;
+                // dispatch by the node's actual legacy type before testing
+                // interfaces or control/reflector/absorber columns are hidden
+                // behind the shared flux-receiver identity.
+                if (type == RBMKType.ROD
+                        && targetColumn instanceof RBMKFluxReceiver receiver
+                        && targetColumn instanceof RBMKRodColumn rod) {
+                    if (rod.hasFuelRod()) {
                         receiver.receiveFlux(this);
                         return;
                     }
-                    if (type == RBMKType.OUTGASSER
-                            && targetColumn instanceof RBMKOutgasserColumn outgasser
-                            && outgasser.canProcessFlux()) {
+                } else if (type == RBMKType.OUTGASSER
+                        && targetColumn instanceof RBMKFluxReceiver receiver
+                        && targetColumn instanceof RBMKOutgasserColumn outgasser) {
+                    if (outgasser.canProcessFlux()) {
                         receiver.receiveFlux(this);
                         return;
                     }

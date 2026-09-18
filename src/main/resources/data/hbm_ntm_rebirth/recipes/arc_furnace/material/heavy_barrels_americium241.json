@@ -1,0 +1,35 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "arc_material_outputs": [
+    {
+      "amount": 432,
+      "material": "Americium241"
+    }
+  ],
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": {
+        "type": "forge:tag_empty",
+        "tag": "forge:heavy_barrels/americium241"
+      }
+    }
+  ],
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:heavy_barrels/americium241"
+      },
+      "legacy_ore": "barrelHeavyAmericium241"
+    }
+  ],
+  "internal_name": "arc.autogen.barrelHeavyAmericium241",
+  "output_fluids": [],
+  "output_items": [],
+  "pools": [],
+  "power": 1000,
+  "source_order": 1933
+}

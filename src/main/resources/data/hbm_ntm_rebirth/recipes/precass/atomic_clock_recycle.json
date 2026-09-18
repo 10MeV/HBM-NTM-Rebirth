@@ -1,0 +1,44 @@
+{
+  "type": "hbm_ntm_rebirth:precass",
+  "duration": 200,
+  "icon": {
+    "item": "hbm_ntm_rebirth:broken_item",
+    "nbt": "{itemID:\"hbm_ntm_rebirth:circuit_atomic_clock\",itemMeta:0}"
+  },
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:broken_item"
+      },
+      "partial_nbt": "{itemID:\"hbm_ntm_rebirth:circuit_atomic_clock\",itemMeta:0}"
+    }
+  ],
+  "internal_name": "precass.atomic_clock.recycle",
+  "name_wrapper": "precass.recycle",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "chance": 0.75,
+      "count": 8,
+      "item": "hbm_ntm_rebirth:circuit_chip"
+    },
+    {
+      "chance": 0.75,
+      "count": 4,
+      "item": "hbm_ntm_rebirth:ingot_polymer"
+    },
+    {
+      "chance": 0.75,
+      "count": 8,
+      "item": "hbm_ntm_rebirth:wire_fine_zirconium"
+    },
+    {
+      "chance": 0.75,
+      "item": "hbm_ntm_rebirth:powder_strontium"
+    }
+  ],
+  "pools": [],
+  "power": 2000
+}

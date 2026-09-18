@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:plates/copper" }, "count": 4, "legacy_ore": "plateCopper" },
+  "output": { "item": "hbm_ntm_rebirth:shell_copper" },
+  "tier_lower": 1
+}

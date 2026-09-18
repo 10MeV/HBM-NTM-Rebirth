@@ -1,0 +1,9 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    { "ingredient": { "tag": "forge:ingots/dineutronium" }, "count": 4, "legacy_ore": "ingotDineutronium" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:depth_brick" }, "count": 1 }
+  ],
+  "output": { "item": "hbm_ntm_rebirth:depth_dnt" },
+  "tier_lower": 1916169
+}

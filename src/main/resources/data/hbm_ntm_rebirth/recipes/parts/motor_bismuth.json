@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["BCB", "SDS", "BCB"],
+  "key": {
+    "B": { "tag": "forge:nuggets/bismuth" },
+    "C": { "tag": "forge:dense_wires/neodymium" },
+    "S": { "tag": "forge:cast_plates/steel" },
+    "D": { "tag": "forge:ingots/dura_steel" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:motor_bismuth" }
+}

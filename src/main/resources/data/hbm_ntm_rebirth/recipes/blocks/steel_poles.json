@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": ["S S", "SSS", "S S"],
+  "key": { "S": { "tag": "forge:ingots/steel" } },
+  "result": { "item": "hbm_ntm_rebirth:steel_poles", "count": 16 }
+}

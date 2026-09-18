@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [" A ", "ABA", " A "],
+  "key": {
+    "A": { "tag": "forge:ingots/asbestos" },
+    "B": { "item": "hbm_ntm_rebirth:brick_light" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:brick_asbestos", "count": 2 }
+}

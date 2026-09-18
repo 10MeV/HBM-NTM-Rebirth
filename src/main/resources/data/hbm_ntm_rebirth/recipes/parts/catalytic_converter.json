@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["PCP", "PBP", "PCP"],
+  "key": {
+    "P": { "tag": "forge:ingots/any_hardplastic" },
+    "C": { "tag": "forge:dusts/cobalt" },
+    "B": { "tag": "forge:ingots/any_bismoid" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:catalytic_converter" }
+}

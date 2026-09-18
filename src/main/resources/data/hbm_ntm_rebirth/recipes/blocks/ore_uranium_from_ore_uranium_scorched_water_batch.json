@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["OOO", "OBO", "OOO"],
+  "key": {
+    "O": { "item": "hbm_ntm_rebirth:ore_uranium_scorched" },
+    "B": { "item": "minecraft:water_bucket" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:ore_uranium", "count": 8 },
+  "show_notification": true
+}

@@ -226,6 +226,9 @@ public final class ObjMachineModels {
     public static final LegacyWavefrontModel REFINERY_EXPLODED = legacyModel("refinery_exploded", "refinery").asVBO();
     public static final LegacyWavefrontModel FLUIDTANK = legacyModel("fluidtank").asVBO();
     public static final LegacyWavefrontModel FLUIDTANK_EXPLODED = legacyModel("fluidtank_exploded", "fluidtank").asVBO();
+    public static final LegacyWavefrontModel DRUM_LEGACY = new LegacyWavefrontModel(
+            new ResourceLocation(HbmNtm.MOD_ID, "models/machines/drum.obj"),
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/models/machines/drum_gray.png")).asVBO();
     public static final LegacyWavefrontModel VACUUM_DISTILL = legacyModel("vacuum_distill").asVBO();
     public static final LegacyWavefrontModel CATALYTIC_CRACKER = legacyModel("catalytic_cracker").asVBO();
     public static final LegacyWavefrontModel CATALYTIC_REFORMER = legacyModel("catalytic_reformer").asVBO();
@@ -246,7 +249,6 @@ public final class ObjMachineModels {
     public static final LegacyWavefrontModel CHUNGUS = legacyModel("chungus").asVBO();
     public static final LegacyWavefrontModel TOWER_SMALL = legacyModel("tower_small").asVBO();
     public static final LegacyWavefrontModel TOWER_LARGE = legacyModel("tower_large").asVBO();
-    public static final LegacyWavefrontModel FAN = legacyModel("fan").asVBO();
     public static final LegacyWavefrontModel CONDENSER = legacyModel("condenser").asVBO();
     public static final LegacyWavefrontModel WOOD_BURNER = legacyModel("wood_burner").asVBO();
     public static final LegacyWavefrontModel COMBUSTION_ENGINE = legacyModel("combustion_engine").asVBO();
@@ -344,7 +346,6 @@ public final class ObjMachineModels {
     public static final ResourceLocation HEATING_OVEN_TEXTURE = machineTexture("heating_oven");
     public static final ResourceLocation HEATEX_TEXTURE = machineTexture("heater_heatex");
     public static final ResourceLocation OILBURNER_TEXTURE = machineTexture("oilburner");
-    public static final ResourceLocation FAN_TEXTURE = machineTexture("fan");
     public static final ResourceLocation ELECTRIC_HEATER_TEXTURE = machineTexture("electric_heater");
     public static final ResourceLocation BOILER_TEXTURE = machineTexture("boiler");
     public static final ResourceLocation INDUSTRIAL_BOILER_TEXTURE = machineTexture("industrial_boiler");

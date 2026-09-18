@@ -1,0 +1,49 @@
+{
+  "type": "hbm_ntm_rebirth:precass",
+  "duration": 400,
+  "icon": {
+    "item": "hbm_ntm_rebirth:broken_item",
+    "nbt": "{itemID:\"hbm_ntm_rebirth:upgrade_effect_3\",itemMeta:0}"
+  },
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:broken_item"
+      },
+      "partial_nbt": "{itemID:\"hbm_ntm_rebirth:upgrade_effect_3\",itemMeta:0}"
+    }
+  ],
+  "internal_name": "precass.upgrade_effect_iii.recycle",
+  "name_wrapper": "precass.recycle",
+  "output_fluids": [
+    {
+      "amount": 375,
+      "fluid": "hbm_ntm_rebirth:solvent"
+    }
+  ],
+  "output_items": [
+    {
+      "chance": 0.75,
+      "count": 16,
+      "item": "hbm_ntm_rebirth:circuit_chip"
+    },
+    {
+      "chance": 0.75,
+      "count": 16,
+      "item": "hbm_ntm_rebirth:circuit_capacitor_tantalium"
+    },
+    {
+      "chance": 0.75,
+      "item": "hbm_ntm_rebirth:upgrade_effect_2"
+    },
+    {
+      "chance": 0.75,
+      "count": 4,
+      "item": "hbm_ntm_rebirth:ingot_rubber"
+    }
+  ],
+  "pools": [],
+  "power": 25000
+}

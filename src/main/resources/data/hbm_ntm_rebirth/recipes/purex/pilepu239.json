@@ -1,0 +1,25 @@
+{
+  "type": "hbm_ntm_rebirth:purex",
+  "duration": 40,
+  "power": 100,
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": { "item": "hbm_ntm_rebirth:pile_rod" },
+      "legacy_id": "hbm:pile_rod",
+      "legacy_meta": 4
+    }
+  ],
+  "input_fluids": [ { "fluid": "hbm_ntm_rebirth:sulfuric_acid", "amount": 100 } ],
+  "output_items": [
+    { "item": "hbm_ntm_rebirth:billet_pu239", "count": 2 },
+    { "item": "hbm_ntm_rebirth:billet_uranium" }
+  ],
+  "output_fluids": [],
+  "pools": [],
+  "icon": { "item": "hbm_ntm_rebirth:pile_rod", "damage": 4 },
+  "auto_switch_group": "autoswitch.pile",
+  "name_wrapper": "purex.recycle",
+  "internal_name": "purex.pilepu239",
+  "source_order": 3
+}

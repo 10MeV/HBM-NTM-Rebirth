@@ -213,6 +213,8 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.coil_copper", "Copper Coil");
         add("item.hbm_ntm_rebirth.coil_tungsten", "Heating Coil");
         add("item.hbm_ntm_rebirth.coil_gold", "Gold Coil");
+        add("item.hbm_ntm_rebirth.broken_item", "Broken Item");
+        add("item.hbm_ntm_rebirth.broken_item.prefix", "Broken %s");
         add("item.hbm_ntm_rebirth.motor", "Motor");
         add("item.hbm_ntm_rebirth.gear_large", "Large Gear");
         add("item.hbm_ntm_rebirth.gear_large_steel", "Large Steel Gear");
@@ -2358,16 +2360,6 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.machine_crystallizer", "Ore Acidizer");
         add("block.hbm_ntm_rebirth.machine_electrolyser", "Electrolysis Machine");
         add("block.hbm_ntm_rebirth.machine_exposure_chamber", "Exposure Chamber");
-        add("block.hbm_ntm_rebirth.hadron_coil_alloy", "Dense Superconducting Coil");
-        add("block.hbm_ntm_rebirth.hadron_coil_gold", "Dense Gold Coil");
-        add("block.hbm_ntm_rebirth.hadron_coil_neodymium", "Dense Neodymium Coil");
-        add("block.hbm_ntm_rebirth.hadron_coil_magtung", "Dense 4000K Superconductor Coil");
-        add("block.hbm_ntm_rebirth.hadron_coil_schrabidium", "Dense Schrabidic Coil");
-        add("block.hbm_ntm_rebirth.hadron_coil_schrabidate", "Dense Schrabidate Coil");
-        add("block.hbm_ntm_rebirth.hadron_coil_starmetal", "Dense Starmetal Coil");
-        add("block.hbm_ntm_rebirth.hadron_coil_chlorophyte", "Dense Chlorophyte Coil");
-        add("block.hbm_ntm_rebirth.hadron_coil_mese", "Dense Mese Coil");
-        add("info.hbm_ntm_rebirth.coil", "Coil Strength");
         add("block.hbm_ntm_rebirth.machine_cyclotron", "Cyclotron");
         add("container.cyclotron", "Cyclotron");
         add("desc.gui.upgrade", "§lAcceptable Upgrades:§r");
@@ -2393,12 +2385,6 @@ public class HbmLanguageProvider extends LanguageProvider {
         add("item.mirror_tool.angle", "Mirror angle too shallow! (min 45°)");
         add("block.hbm_ntm_rebirth.machine_tower_small", "Auxiliary Cooling Tower");
         add("block.hbm_ntm_rebirth.machine_tower_large", "Cooling Tower");
-        add("block.hbm_ntm_rebirth.fan", "Fan");
-        add("block.hbm_ntm_rebirth.fan.desc", "Activates using redstone$Will push entities up to 10 blocks$Right-click with screwdriver to flip$Right-click with hand drill to switch mode");
-        add("block.hbm_ntm_rebirth.fan.falloffOn", "Fan power decreases with distance");
-        add("block.hbm_ntm_rebirth.fan.falloffOff", "Consistent fan power");
-        add("block.hbm_ntm_rebirth.fan.suckOn", "Fan is now sucking");
-        add("block.hbm_ntm_rebirth.fan.suckOff", "Fan is now blowing");
         add("block.hbm_ntm_rebirth.machine_turbofan", "Turbofan");
         add("block.hbm_ntm_rebirth.machine_turbinegas", "Combined Cycle Gas Turbine");
         add("block.hbm_ntm_rebirth.machine_ammo_press", "Ammo Press");

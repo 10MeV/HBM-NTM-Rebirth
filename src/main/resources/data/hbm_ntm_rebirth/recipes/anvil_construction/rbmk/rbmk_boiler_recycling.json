@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:rbmk_boiler"
+    }
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:rbmk_blank"
+    },
+    {
+      "item": "hbm_ntm_rebirth:pipes_copper",
+      "count": 6
+    },
+    {
+      "item": "hbm_ntm_rebirth:shell_copper",
+      "count": 2
+    }
+  ],
+  "tier_lower": 4,
+  "overlay": "recycling"
+}

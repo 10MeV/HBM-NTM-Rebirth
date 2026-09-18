@@ -1,0 +1,52 @@
+{
+  "type": "hbm_ntm_rebirth:precass",
+  "duration": 1200,
+  "icon": {
+    "item": "hbm_ntm_rebirth:broken_item",
+    "nbt": "{itemID:\"hbm_ntm_rebirth:upgrade_overdrive_3\",itemMeta:0}"
+  },
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:broken_item"
+      },
+      "partial_nbt": "{itemID:\"hbm_ntm_rebirth:upgrade_overdrive_3\",itemMeta:0}"
+    }
+  ],
+  "internal_name": "precass.upgrade_overdive_iii.recycle",
+  "name_wrapper": "precass.recycle",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "chance": 0.75,
+      "item": "hbm_ntm_rebirth:upgrade_overdrive_2"
+    },
+    {
+      "chance": 0.75,
+      "item": "hbm_ntm_rebirth:upgrade_speed_3"
+    },
+    {
+      "chance": 0.75,
+      "item": "hbm_ntm_rebirth:upgrade_effect_3"
+    },
+    {
+      "chance": 0.75,
+      "count": 16,
+      "item": "hbm_ntm_rebirth:ingot_bismuth_bronze"
+    },
+    {
+      "chance": 0.75,
+      "count": 16,
+      "item": "hbm_ntm_rebirth:ingot_cft"
+    },
+    {
+      "chance": 0.75,
+      "count": 16,
+      "item": "hbm_ntm_rebirth:circuit_bismoid"
+    }
+  ],
+  "pools": [],
+  "power": 100000
+}

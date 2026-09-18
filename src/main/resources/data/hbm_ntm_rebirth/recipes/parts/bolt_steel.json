@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": { "#": { "tag": "forge:ingots/steel" } },
+  "pattern": ["#", "#"],
+  "result": { "item": "hbm_ntm_rebirth:bolt_steel", "count": 16 },
+  "show_notification": true
+}

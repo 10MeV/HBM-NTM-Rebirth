@@ -44,6 +44,7 @@ import com.hbm.ntm.block.RadioboxBlock;
 import com.hbm.ntm.block.RadioReceiverBlock;
 import com.hbm.ntm.block.RefuelerBlock;
 import com.hbm.ntm.block.StorageDrumBlock;
+import com.hbm.ntm.block.SolarMirrorBlock;
 import com.hbm.ntm.block.ThresherBlock;
 import com.hbm.ntm.block.VendingMachineBlock;
 import com.hbm.ntm.item.LegacyStateBlockItem;
@@ -59,6 +60,7 @@ import com.hbm.ntm.client.obj.ObjMachineModels;
 import com.hbm.ntm.client.obj.ObjNetworkModels;
 import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.client.obj.ObjParticleAcceleratorModels;
+import com.hbm.ntm.client.obj.ObjReactorModels;
 import com.hbm.ntm.fluid.HbmFluidTank;
 import com.hbm.ntm.fluid.HbmFluids;
 import com.hbm.ntm.neutron.RBMKCranePlanner;
@@ -94,9 +96,18 @@ import java.util.Map;
 public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRenderer {
     private static final float LEGACY_GUI_SLOT_PIXELS = 16.0F;
     private static final float LEGACY_GUI_MAX_OCCUPANCY = 0.86F;
+    private static final String RESEARCH_REACTOR_BASE_MODEL = "models/reactors/reactor_small_base.obj";
     private static final Map<LegacyMachineDefinition, LegacyWavefrontModel> MODELS = new IdentityHashMap<>();
     private static final LegacyWavefrontModel.SelectionHandle CHARGER_ITEM_PARTS =
             ObjMachineModels.CHARGER.prepareRenderOnlyInCallOrder("Base", "Slide");
+    private static final LegacyWavefrontModel.SelectionHandle HEPHAESTUS_ITEM_MAIN =
+            ObjMachineModels.HEPHAESTUS_LEGACY.prepareRenderOnlyInCallOrder("Main");
+    private static final LegacyWavefrontModel.SelectionHandle HEPHAESTUS_ITEM_ROTOR =
+            ObjMachineModels.HEPHAESTUS_LEGACY.prepareRenderOnlyInCallOrder("Rotor");
+    private static final LegacyWavefrontModel.SelectionHandle HEPHAESTUS_ITEM_CORE =
+            ObjMachineModels.HEPHAESTUS_LEGACY.prepareRenderOnlyInCallOrder("Core");
+    private static final ResourceLocation HEPHAESTUS_ITEM_CORE_IDLE_TEXTURE =
+            new ResourceLocation(HbmNtm.MOD_ID, "textures/models/machines/cobblestone.png");
     private static final Vec3 FUSION_INV_KLYSTRON_TRANSLATION = new Vec3(0.0D, -3.0D, 1.0D);
     private static final Vec3 FUSION_INV_LOW_TRANSLATION = new Vec3(0.0D, -3.0D, 0.0D);
     private static final Vec3 FUSION_INV_COLLECTOR_TRANSLATION = new Vec3(0.0D, -2.0D, 0.0D);
@@ -245,6 +256,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
                 || blockItem.getBlock() instanceof RadioReceiverBlock
                 || blockItem.getBlock() instanceof RefuelerBlock
                 || blockItem.getBlock() instanceof StorageDrumBlock
+                || blockItem.getBlock() instanceof SolarMirrorBlock
                 || blockItem.getBlock() instanceof ThresherBlock
                 || blockItem.getBlock() instanceof VendingMachineBlock
                 || blockItem.getBlock() instanceof LegacyConnectorBlock
@@ -313,6 +325,8 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
                     packedLight, packedOverlay);
         } else if (blockItem.getBlock() instanceof StorageDrumBlock) {
             StorageDrumRenderer.renderItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
+        } else if (blockItem.getBlock() instanceof SolarMirrorBlock) {
+            renderSolarMirrorItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
         } else if (blockItem.getBlock() instanceof ThresherBlock) {
             renderThresherItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
         } else if (blockItem.getBlock() instanceof VendingMachineBlock block) {
@@ -440,6 +454,9 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             // model as the TESR, so inventory/hand previews must keep face normals as well.
             return ObjMachineModels.BLAST_FURNACE_LEGACY;
         }
+        if (definition.renderProfile() == LegacyMachineRenderProfile.HEPHAESTUS_RUNNING_CORE) {
+            return ObjMachineModels.HEPHAESTUS_LEGACY;
+        }
         if (definition.modelLocation().equals(ObjMachineModels.HEATING_OVEN_LEGACY.modelLocation())) {
             // Ashpit and Heating Oven both use ResourceManager.heater_oven.noSmooth() in 1.7.10.
             return ObjMachineModels.HEATING_OVEN_LEGACY;
@@ -450,6 +467,10 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
     private static void renderVisibleMachineItem(ItemStack stack, LegacyMachineDefinition definition, BlockState state,
             ItemDisplayContext displayContext, PoseStack poseStack, MultiBufferSource buffer, int packedLight,
             int packedOverlay) {
+        if (RESEARCH_REACTOR_BASE_MODEL.equals(definition.modelLocation().getPath())) {
+            renderResearchReactorItem(displayContext, poseStack, buffer, packedLight, packedOverlay);
+            return;
+        }
         LegacyWavefrontModel model = MODELS.computeIfAbsent(definition,
                 LegacyVisibleMachineItemRenderer::createVisibleMachineModel);
         LegacyMachinePartRenderSelection.Selection selection = LegacyMachinePartRenderSelection.item(definition);
@@ -483,6 +504,25 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         poseStack.popPose();
     }
 
+    /** Replays the dedicated 1.7.10 ItemRenderLibrary entry instead of the base-only generic machine preview. */
+    private static void renderResearchReactorItem(ItemDisplayContext displayContext, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        poseStack.pushPose();
+        if (displayContext == ItemDisplayContext.GUI) {
+            applyLegacyInventoryObjTransform(poseStack, -4.0D, 4.0D);
+            // GuiGraphics supplies a Y reflection, while 1.7.10 ItemRenderBase used a full
+            // XYZ reflection. Their remaining object-space difference is exactly Ry(180).
+            LegacyPoseRotations.rotateYDegrees(poseStack, 180.0F);
+        } else {
+            applyLegacyItemBaseNonInventoryTransform(displayContext, poseStack);
+        }
+        ObjReactorModels.SMALL_BASE.renderAll(ObjReactorModels.SMALL_BASE_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
+        ObjReactorModels.SMALL_RODS.renderAll(ObjReactorModels.SMALL_RODS_TEXTURE,
+                poseStack, buffer, packedLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
+        poseStack.popPose();
+    }
+
     /**
      * Read-only, source-backed Fusion inventory contracts used by the opt-in runtime audit.
      *
@@ -508,7 +548,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             List<String> legalSignedFields) {
         return new FusionItemAuditContract(kind, id, guiAnchorY, translation.x, translation.y, translation.z,
                 FUSION_INVENTORY_PIXEL_SCALE, inventoryScale, FUSION_COMMON_SCALE, inventoryRotates,
-                LegacyTexturedRenderMode.CUTOUT_REVERSED_CULL,
+                LegacyTexturedRenderMode.CUTOUT_CULL,
                 LegacyTexturedRenderMode.CUTOUT_CULL, LegacyTexturedRenderMode.CUTOUT_CULL, true,
                 includedParts, excludedParts, legalSignedFields);
     }
@@ -630,14 +670,6 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
     private static LegacyTexturedRenderMode fusionItemCullMode(FusionItemAuditContract contract,
             ItemDisplayContext displayContext) {
-        /*
-         * GuiGraphics supplies BEWLRs with an inherited (1,-1,1) screen-space reflection.
-         * LegacyWavefrontModel correctly reverses culling for an object-local mirrored pose,
-         * but that inherited GUI reflection is cancelled by the GUI projection and must not
-         * turn these positive-scale legacy inventory matrices inside-out. Supplying the paired
-         * mode here lets the shared determinant resolver cancel only the GUI reflection; world,
-         * ground, fixed and hand contexts continue to resolve ordinary CUTOUT_CULL.
-         */
         return displayContext == ItemDisplayContext.GUI
                 ? contract.requestedGuiCullMode()
                 : contract.requestedNonGuiCullMode();
@@ -713,14 +745,16 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             LegacyPoseRotations.rotateYDegrees(poseStack, (float) profile.commonYRotationDegrees());
         }
 
-        if (isLegacyFluidTankModel(definition)) {
+        if (definition.renderProfile() == LegacyMachineRenderProfile.HEPHAESTUS_RUNNING_CORE) {
+            renderLegacyHephaestusInventoryItem(poseStack, buffer, packedLight, packedOverlay);
+        } else if (isLegacyFluidTankModel(definition)) {
             renderLegacyFluidTankInventoryItem(stack, state, poseStack, buffer, packedLight, packedOverlay);
         } else if (definition.itemRenderAll()) {
             model.renderAll(definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
-                    legacyVisibleItemCullMode(definition, ItemDisplayContext.GUI));
+                    legacyVisibleItemCullMode(definition));
         } else {
             renderMachineParts(definition, model, poseStack, buffer, packedLight, packedOverlay,
-                    legacyVisibleItemCullMode(definition, ItemDisplayContext.GUI));
+                    legacyVisibleItemCullMode(definition));
         }
         return true;
     }
@@ -740,7 +774,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         applyFusionLegacyNonGuiTransform(legacyContext, poseStack);
         LegacyPoseRotations.rotateYDegrees(poseStack, 90.0F);
         renderMachineParts(definition, model, poseStack, buffer, packedLight, packedOverlay,
-                legacyVisibleItemCullMode(definition, displayContext));
+                legacyVisibleItemCullMode(definition));
         return true;
     }
 
@@ -755,31 +789,12 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
         applyFusionLegacyNonGuiTransform(legacyContext, poseStack);
         model.renderAll(definition.textureLocation(), poseStack, buffer, packedLight, packedOverlay,
-                legacyVisibleItemCullMode(definition, displayContext));
+                legacyVisibleItemCullMode(definition));
         return true;
     }
 
-    private static LegacyTexturedRenderMode legacyVisibleItemCullMode(LegacyMachineDefinition definition,
-            ItemDisplayContext displayContext) {
-        LegacyTexturedRenderMode renderMode = LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
-        if (displayContext != ItemDisplayContext.GUI) {
-            return renderMode;
-        }
-        String modelPath = definition.modelLocation().getPath();
-        if (("models/machines/furnace_iron.obj".equals(modelPath)
-                || "models/machines/furnace_steel.obj".equals(modelPath)
-                || "models/machines/soldering_station.obj".equals(modelPath))
-                && renderMode == LegacyTexturedRenderMode.CUTOUT_CULL) {
-            /*
-             * GuiGraphics contributes a (1,-1,1) carrier reflection. The shared OBJ backend
-             * normally reverses culling for a reflected pose, but 1.7.10 ItemRenderBase's
-             * inventory projection and local (-1,-1,-1) transform already form the matching
-             * front-face convention. Request the paired mode so the determinant resolver emits
-             * ordinary CUTOUT_CULL instead of exposing the inside of these closed legacy models.
-             */
-            return LegacyTexturedRenderMode.CUTOUT_REVERSED_CULL;
-        }
-        return renderMode;
+    private static LegacyTexturedRenderMode legacyVisibleItemCullMode(LegacyMachineDefinition definition) {
+        return LegacyMachinePartRenderContexts.renderMode(definition.renderMode());
     }
 
     private static LegacyVisibleInventoryProfile legacyVisibleInventoryProfile(LegacyMachineDefinition definition) {
@@ -790,7 +805,9 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
             case "models/machines/furnace_steel.obj" -> new LegacyVisibleInventoryProfile(-1.5D, 3.25D, 1.0D,
                     0.0D, false);
             case "models/fluidtank.obj" -> new LegacyVisibleInventoryProfile(-2.0D, 3.5D, 0.75D, 90.0D,
-                    false);
+                    true);
+            case "models/machines/hephaestus.obj" -> new LegacyVisibleInventoryProfile(-4.5D, 2.25D, 0.5D,
+                    0.0D, true);
             case "models/reactors/watz.obj" -> new LegacyVisibleInventoryProfile(-1.0D, 2.0D, 1.0D, 0.0D, true);
             case "models/machines/watz_pump.obj" -> new LegacyVisibleInventoryProfile(-1.5D, 5.0D, 1.0D, 0.0D,
                     true);
@@ -802,6 +819,30 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
 
     private static boolean isLegacyFluidTankModel(LegacyMachineDefinition definition) {
         return "models/fluidtank.obj".equals(definition.modelLocation().getPath());
+    }
+
+    private static void renderLegacyHephaestusInventoryItem(PoseStack poseStack, MultiBufferSource buffer,
+            int packedLight, int packedOverlay) {
+        LegacyWavefrontModel model = ObjMachineModels.HEPHAESTUS_LEGACY;
+        model.renderOnlyInCallOrder(ObjMachineModels.HEPHAESTUS_TEXTURE, poseStack, buffer,
+                packedLight, packedOverlay, 255, 255, 255, 255, false,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, LegacyWavefrontModel.UvTransform.DEFAULT,
+                HEPHAESTUS_ITEM_MAIN);
+
+        poseStack.pushPose();
+        for (int i = 0; i < 3; i++) {
+            model.renderOnlyInCallOrder(ObjMachineModels.HEPHAESTUS_TEXTURE, poseStack, buffer,
+                    packedLight, packedOverlay, 255, 255, 255, 255, false,
+                    LegacyTexturedRenderMode.CUTOUT_NO_CULL, LegacyWavefrontModel.UvTransform.DEFAULT,
+                    HEPHAESTUS_ITEM_ROTOR);
+            LegacyPoseRotations.rotateYDegrees(poseStack, 120.0F);
+        }
+        poseStack.popPose();
+
+        model.renderOnlyInCallOrder(HEPHAESTUS_ITEM_CORE_IDLE_TEXTURE, poseStack, buffer,
+                packedLight, packedOverlay, 255, 255, 255, 255, false,
+                LegacyTexturedRenderMode.CUTOUT_CULL, LegacyWavefrontModel.UvTransform.DEFAULT,
+                HEPHAESTUS_ITEM_CORE);
     }
 
     private static void renderLegacyFluidTankInventoryItem(ItemStack stack, BlockState state, PoseStack poseStack,
@@ -817,6 +858,30 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         LegacyFluidTankRenderHelper.renderSmallTankBody(ObjMachineModels.FLUIDTANK,
                 ObjMachineModels.FLUIDTANK_EXPLODED,
                 tank, exploded, poseStack, buffer, packedLight, packedOverlay);
+    }
+
+    private static void renderSolarMirrorItem(ItemDisplayContext displayContext, PoseStack poseStack,
+            MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        poseStack.pushPose();
+        if (displayContext == ItemDisplayContext.GUI) {
+            // ItemRenderLibrary: T(0,-3,0) -> S(8), replayed on the same
+            // centered modern GUI baseline as the other explicitly corrected machines.
+            applyCenteredLegacyInventoryObjTransform(poseStack, -3.0D, 8.0D);
+        } else {
+            applyLegacyItemBaseNonInventoryTransform(displayContext, poseStack);
+        }
+
+        LegacyWavefrontModel model = ObjMachineModels.SOLAR_MIRROR_LEGACY;
+        model.renderPart("Base", ObjMachineModels.SOLAR_MIRROR_TEXTURE, poseStack, buffer,
+                packedLight, packedOverlay, 255, 255, 255, 255, false,
+                LegacyTexturedRenderMode.CUTOUT_CULL, LegacyWavefrontModel.UvTransform.DEFAULT);
+        poseStack.translate(0.0D, 1.0D, 0.0D);
+        LegacyPoseRotations.rotateZDegrees(poseStack, -45.0F);
+        poseStack.translate(0.0D, -1.0D, 0.0D);
+        model.renderPart("Mirror", ObjMachineModels.SOLAR_MIRROR_TEXTURE, poseStack, buffer,
+                packedLight, packedOverlay, 255, 255, 255, 255, false,
+                LegacyTexturedRenderMode.CUTOUT_CULL, LegacyWavefrontModel.UvTransform.DEFAULT);
+        poseStack.popPose();
     }
 
     private static void renderPressItem(ItemDisplayContext displayContext, PoseStack poseStack,
@@ -1492,7 +1557,7 @@ public class LegacyVisibleMachineItemRenderer extends BlockEntityWithoutLevelRen
         Vec3 translation = definition.modelTranslation(state);
         poseStack.translate(translation.x, translation.y, translation.z);
         LegacyPoseRotations.rotateYDegrees(poseStack, definition.postModelYRotation(state));
-        LegacyTexturedRenderMode renderMode = legacyVisibleItemCullMode(definition, displayContext);
+        LegacyTexturedRenderMode renderMode = legacyVisibleItemCullMode(definition);
 
         if (definition.renderProfile() == LegacyMachineRenderProfile.DEFAULT) {
             if (definition.itemRenderAll()) {

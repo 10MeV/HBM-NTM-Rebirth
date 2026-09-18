@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": {
+      "tag": "forge:plates/aluminium"
+    },
+    "G": {
+      "tag": "forge:glass_panes"
+    },
+    "M": {
+      "tag": "forge:ingots/mercury"
+    }
+  },
+  "pattern": [
+    "G",
+    "M",
+    "A"
+  ],
+  "result": {
+    "count": 8,
+    "item": "hbm_ntm_rebirth:spotlight_fluoro"
+  },
+  "show_notification": true
+}

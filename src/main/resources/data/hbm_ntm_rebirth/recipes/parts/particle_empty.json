@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["STS", "G G", "STS"],
+  "key": {
+    "S": { "tag": "forge:cast_plates/lead" },
+    "T": { "item": "hbm_ntm_rebirth:coil_gold" },
+    "G": { "tag": "forge:glass_panes" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:particle_empty", "count": 2 }
+}

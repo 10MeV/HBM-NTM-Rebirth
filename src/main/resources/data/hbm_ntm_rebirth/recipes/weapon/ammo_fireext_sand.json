@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "pattern": ["NNN", "NFN", "NNN"],
+  "key": {
+    "N": { "item": "hbm_ntm_rebirth:sand_boron" },
+    "F": { "item": "hbm_ntm_rebirth:ammo_fireext_0" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:ammo_fireext_2" },
+  "show_notification": true
+}

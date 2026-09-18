@@ -1,0 +1,21 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:rbmk_control_auto"
+    }
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:rbmk_control"
+    },
+    {
+      "item": "hbm_ntm_rebirth:circuit_advanced"
+    },
+    {
+      "item": "hbm_ntm_rebirth:crt_display"
+    }
+  ],
+  "tier_lower": 4,
+  "overlay": "recycling"
+}

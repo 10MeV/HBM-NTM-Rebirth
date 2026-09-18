@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:purex",
+  "duration": 600,
+  "power": 1000,
+  "input_items": [
+    { "count": 1, "ingredient": { "tag": "forge:billets/lead209" }, "legacy_ore": "billetLead209" },
+    { "count": 1, "ingredient": { "item": "hbm_ntm_rebirth:billet_balefire_gold" } }
+  ],
+  "input_fluids": [ { "fluid": "hbm_ntm_rebirth:amat", "amount": 1000 } ],
+  "output_items": [ { "item": "hbm_ntm_rebirth:billet_flashlead" } ],
+  "output_fluids": [],
+  "pools": [],
+  "internal_name": "purex.flashlead",
+  "source_order": 2
+}

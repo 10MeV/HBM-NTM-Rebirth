@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:plates/weapon_steel" }, "count": 4, "legacy_ore": "plateWeaponSteel" },
+  "output": { "item": "hbm_ntm_rebirth:shell_weaponsteel" },
+  "tier_lower": 1
+}

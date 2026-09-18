@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "pattern": [" P ", "NSN", " P "],
+  "key": {
+    "P": { "tag": "forge:nuggets/pu239" },
+    "N": { "item": "hbm_ntm_rebirth:neutron_reflector" },
+    "S": { "item": "hbm_ntm_rebirth:ammo_shell_explosive" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:ammo_shell_w9" },
+  "show_notification": true
+}

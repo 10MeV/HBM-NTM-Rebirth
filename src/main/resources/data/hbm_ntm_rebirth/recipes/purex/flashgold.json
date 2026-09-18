@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:purex",
+  "duration": 600,
+  "power": 1000,
+  "input_items": [
+    { "count": 1, "ingredient": { "tag": "forge:billets/gold198" }, "legacy_ore": "billetGold198" },
+    { "count": 1, "ingredient": { "item": "hbm_ntm_rebirth:pellet_charged" } }
+  ],
+  "input_fluids": [ { "fluid": "hbm_ntm_rebirth:amat", "amount": 1000 } ],
+  "output_items": [ { "item": "hbm_ntm_rebirth:billet_balefire_gold", "count": 2 } ],
+  "output_fluids": [],
+  "pools": [],
+  "internal_name": "purex.flashgold",
+  "source_order": 1
+}

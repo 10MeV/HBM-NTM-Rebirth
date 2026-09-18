@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "W": { "tag": "forge:wires/copper" },
+    "I": { "tag": "forge:plates/iron" },
+    "P": { "item": "hbm_ntm_rebirth:plate_polymer" },
+    "C": { "tag": "forge:circuits/analog" }
+  },
+  "pattern": ["WIW", "PCP", "WIW"],
+  "result": { "item": "hbm_ntm_rebirth:upgrade_template" },
+  "show_notification": true
+}

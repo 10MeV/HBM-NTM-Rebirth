@@ -13,7 +13,6 @@ import com.hbm.ntm.client.overlay.LegacyLookOverlayRenderer;
 import com.hbm.ntm.client.obj.ObjArmorModels;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel.RenderBackendClearReason;
-import com.hbm.ntm.client.obj.LegacyWavefrontModel.RenderBackendFlushStage;
 import com.hbm.ntm.client.overlay.LegacyItemHudRenderer;
 import com.hbm.ntm.client.particle.HbmDeferredParticleRenderer;
 import com.hbm.ntm.client.render.HbmBlackHoleEffects;
@@ -421,9 +420,7 @@ public final class ClientForgeEvents {
         }
 
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) {
-            LegacyMachineEffectPresenter.present(PresentStage.AFTER_BLOCK_ENTITIES);
-            LegacyWavefrontModel.flushRenderBackend(RenderBackendFlushStage.AFTER_BLOCK_ENTITIES,
-                    event.getProjectionMatrix());
+            LegacyMachineEffectPresenter.presentAfterBlockEntities(event.getProjectionMatrix());
             LegacyLightSampleCache.endBlockEntityPass();
             LegacyRenderLighting.endBlockEntityPass();
         }

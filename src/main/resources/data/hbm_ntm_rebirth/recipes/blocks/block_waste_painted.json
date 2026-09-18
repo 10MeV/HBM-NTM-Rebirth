@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    { "tag": "forge:dyes/yellow" },
+    { "item": "hbm_ntm_rebirth:block_waste" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:block_waste_painted" }
+}

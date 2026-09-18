@@ -4,12 +4,15 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.api.redstoneoverradio.RORInfo;
 import com.hbm.ntm.api.redstoneoverradio.RTTYControllerState;
 import com.hbm.ntm.api.redstoneoverradio.RTTYSystem;
+import com.hbm.ntm.block.RBMKConsoleBlock;
 import com.hbm.ntm.blockentity.RBMKPanelBlockEntity;
+import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
 import com.hbm.ntm.neutron.RBMKConsolePlanner;
 import com.hbm.ntm.neutron.RBMKWorldRenderPlanner;
 import com.hbm.ntm.registry.ModBlocks;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraftforge.event.RegisterGameTestsEvent;
@@ -64,6 +67,39 @@ public final class RBMKConsoleGameTests {
     }
 
     @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "rbmkConsole")
+    public static void consoleLayoutUsesTheLegacyCoreOriginForBothXrBoxes(GameTestHelper helper) {
+        RBMKConsoleBlock block = (RBMKConsoleBlock) ModBlocks.RBMK_CONSOLE.get();
+        for (Direction facing : Direction.Plane.HORIZONTAL) {
+            LegacyMultiblockLayout layout = block.getMultiblockLayout(
+                    block.defaultBlockState().setValue(RBMKConsoleBlock.FACING, facing),
+                    helper.getLevel(), BlockPos.ZERO);
+
+            require(layout.offsets().size() == 25,
+                    "RBMK console must retain the source 5x2 footprint and four-block-high rear row for " + facing);
+            require(layout.checkOffsets().size() == 25,
+                    "RBMK console preflight and filled layout must use the same source footprint for " + facing);
+
+            Direction lateral = facing.getClockWise();
+            for (int side = -2; side <= 2; side++) {
+                for (int y = 0; y <= 3; y++) {
+                    require(layout.containsOffset(consoleOffset(facing, lateral, 0, side, y)),
+                            "missing source rear-row cell for " + facing + " side=" + side + " y=" + y);
+                }
+                BlockPos frontCell = consoleOffset(facing, lateral, 1, side, 0);
+                require(layout.containsOffset(frontCell),
+                        "missing source front-row cell for " + facing + " side=" + side);
+                require(!layout.proxyMode(frontCell).isProxy(),
+                        "ordinary RBMK console front-row dummies must not become legacy proxy ports");
+                require(!layout.isLegacyExtraOffset(frontCell),
+                        "the second fillSpace box is not a legacy makeExtra region");
+                require(!layout.containsOffset(consoleOffset(facing, lateral, 2, side, 0)),
+                        "RBMK console must not gain a spurious third footprint row for " + facing);
+            }
+        }
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "rbmkConsole")
     public static void terminalSupportsRorWriteSubmitAndPolling(GameTestHelper helper) {
         RBMKPanelBlockEntity terminal = new RBMKPanelBlockEntity(BlockPos.ZERO,
                 ModBlocks.RBMK_TERMINAL.get().defaultBlockState());
@@ -112,5 +148,12 @@ public final class RBMKConsoleGameTests {
         if (Math.abs(expected - actual) > 1.0E-6D) {
             throw new AssertionError(message + ": expected " + expected + " but was " + actual);
         }
+    }
+
+    private static BlockPos consoleOffset(Direction facing, Direction lateral, int forward, int side, int y) {
+        return new BlockPos(
+                facing.getStepX() * forward + lateral.getStepX() * side,
+                y,
+                facing.getStepZ() * forward + lateral.getStepZ() * side);
     }
 }

@@ -1,0 +1,63 @@
+{
+  "type": "hbm_ntm_rebirth:precass",
+  "duration": 200,
+  "input_fluids": [
+    {
+      "amount": 500,
+      "fluid": "hbm_ntm_rebirth:perfluoromethyl"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_silicon"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 4
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:plate_polymer"
+      }
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:nuggets/any_bismoid"
+      },
+      "legacy_ore": "nuggetAnyBismoid"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:wires/gold"
+      },
+      "legacy_ore": "wireFineGold"
+    }
+  ],
+  "internal_name": "precass.chip_bismoid",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "type": "one_of",
+      "entries": [
+        {
+          "item": "hbm_ntm_rebirth:circuit_chip_bismoid",
+          "weight": 75
+        },
+        {
+          "item": "hbm_ntm_rebirth:broken_item",
+          "nbt": "{itemID:\"hbm_ntm_rebirth:circuit_chip_bismoid\",itemMeta:0}",
+          "weight": 25
+        }
+      ]
+    }
+  ],
+  "pools": [
+    "528.chip_bismoid"
+  ],
+  "power": 1000,
+  "source_order": 3
+}

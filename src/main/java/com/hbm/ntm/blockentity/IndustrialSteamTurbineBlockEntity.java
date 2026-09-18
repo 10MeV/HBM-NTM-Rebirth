@@ -152,12 +152,35 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
     }
 
     @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putLong("lastPowerTarget", Math.max(0L, lastPowerTarget));
+        tag.putDouble("spin", Math.max(0.0D, spin));
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains("lastPowerTarget")) {
+            lastPowerTarget = Math.max(0L, tag.getLong("lastPowerTarget"));
+            energy.setPower(lastPowerTarget);
+        }
+        if (tag.contains("spin")) {
+            spin = Math.max(0.0D, tag.getDouble("spin"));
+        }
+    }
+
+    @Override
     public void serializeLegacyBufPacket(FriendlyByteBuf data) {
         // 1.7.10 TileEntityTurbineBase#serialize, then TileEntityMachineIndustrialTurbine#serialize.
         writeLegacyLoadedTileBinary(data);
         LegacyFluidTankPacket.write(data, inputTank);
         LegacyFluidTankPacket.write(data, outputTank);
-        data.writeLong(energy.getPower());
+        // The legacy powerBuffer is captured before output transfer.  It is the
+        // value printed by MachineIndustrialTurbine#printHook, not the remaining
+        // storage after the modern port transfer has run.
+        data.writeLong(Math.max(0L, lastPowerTarget));
         data.writeDouble(spin);
     }
 
@@ -166,7 +189,8 @@ public class IndustrialSteamTurbineBlockEntity extends LegacySteamTurbineBlockEn
         readLegacyLoadedTileBinary(data);
         LegacyFluidTankPacket.read(data, inputTank);
         LegacyFluidTankPacket.read(data, outputTank);
-        energy.setPower(data.readLong());
+        lastPowerTarget = Math.max(0L, data.readLong());
+        energy.setPower(lastPowerTarget);
         spin = Math.max(0.0D, data.readDouble());
     }
 

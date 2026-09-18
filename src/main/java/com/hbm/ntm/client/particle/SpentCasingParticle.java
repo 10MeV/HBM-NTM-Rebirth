@@ -4,6 +4,7 @@ import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyUntexturedQuadRenderer;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.render.LegacyParticleModelRenderContext;
 import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.hbm.ntm.sound.LegacySoundPlayer;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -283,9 +284,11 @@ public class SpentCasingParticle extends Particle {
         }
         String[] parts = this.definition.type().partNames();
         int packedLight = getLightColor(partialTick);
-        for (int i = 0; i < parts.length; i++) {
-            int color = this.definition.color(i);
-            renderCasingPart(parts[i], color, poseStack, buffer, packedLight);
+        try (LegacyParticleModelRenderContext.Scope modelViewScope = LegacyParticleModelRenderContext.enter()) {
+            for (int i = 0; i < parts.length; i++) {
+                int color = this.definition.color(i);
+                renderCasingPart(parts[i], color, poseStack, buffer, packedLight);
+            }
         }
         casingModelBatchActive = true;
 

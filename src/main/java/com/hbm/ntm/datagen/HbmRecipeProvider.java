@@ -20,6 +20,7 @@ import com.hbm.ntm.item.BedrockOreItem;
 import com.hbm.ntm.item.BedrockOreItem.BedrockOreGrade;
 import com.hbm.ntm.item.BedrockOreItem.BedrockOreType;
 import com.hbm.ntm.item.BedrockOreFragmentItem;
+import com.hbm.ntm.item.BrokenItem;
 import com.hbm.ntm.item.FluidIconItem;
 import com.hbm.ntm.item.FoundryMoldItem;
 import com.hbm.ntm.item.FoundryScrapsItem;
@@ -390,6 +391,10 @@ public final class HbmRecipeProvider extends RecipeProvider {
         legacySmeltingRecipes(consumer);
         legacyToolRecipes(consumer);
         legacyPartRecipes(consumer);
+        legacyBreedingRodRecipes(consumer);
+        legacyDetonatorRecipe(consumer);
+        legacyAdditionalWorkbenchRecipes(consumer);
+        legacyAmmoCraftingRecipes(consumer);
         legacyMissingItemRecipes(consumer);
         missileSystemRecipes(consumer);
         legacyStructuralRecipes(consumer);
@@ -2601,20 +2606,24 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 List.of(blastInput(HbmIngredient.legacyOre("ingotCobalt", 1)),
                         blastLegacyItemInput(item("meteorite_sword_hardened"), 1, "meteorite_sword_hardened")),
                 List.of(blastOutput("meteorite_sword_alloyed", 1)));
-        blastFurnace(consumer, "starmetal", "blast.starmetal", 10, 600,
+        blastFurnace(consumer, "meteor", "blast.meteor", 10, 600,
+                List.of(blastInput(HbmIngredient.legacyOre("ingotCobalt", 1)),
+                        blastLegacyItemInput(item("powder_meteorite"), 1, "powder_meteorite")),
+                List.of(blastOutput("ingot_meteorite", 1)));
+        blastFurnace(consumer, "starmetal", "blast.starmetal", 11, 600,
                 List.of(blastInput(HbmIngredient.legacyOre("ingotSaturnite", 1)),
                         blastLegacyItemInput(item("powder_meteorite"), 1, "powder_meteorite")),
                 List.of(blastOutput("ingot_starmetal", 1)));
-        blastFurnace(consumer, "paa", "blast.paa", 11, 600,
+        blastFurnace(consumer, "paa", "blast.paa", 12, 600,
                 List.of(blastInput(HbmIngredient.legacyOre("ingotGold", 1)),
                         blastLegacyItemInput(item("plate_mixed"), 1, "plate_mixed")),
                 List.of(blastOutput("plate_paa", 1)));
 
-        blastFurnace(consumer, "firebrick", "blast.firebrick", 12, 800,
+        blastFurnace(consumer, "firebrick", "blast.firebrick", 13, 800,
                 List.of(blastInput(HbmIngredient.legacyOre("dustAluminum", 1)),
                         blastLegacyItemInput(Items.CLAY_BALL, 7, "minecraft:clay_ball")),
                 List.of(blastOutput("ingot_firebrick", 8)));
-        blastFurnace(consumer, "firebrick_limestone", "blast.firebrickLimestone", 13, 800,
+        blastFurnace(consumer, "firebrick_limestone", "blast.firebrickLimestone", 14, 800,
                 List.of(blastInput(HbmIngredient.legacyOre("oreLimestone", 1)),
                         blastLegacyItemInput(Items.CLAY_BALL, 6, "minecraft:clay_ball")),
                 List.of(blastOutput("ingot_firebrick", 8)));
@@ -3068,6 +3077,29 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .sourceOrder(0)
                 .save(consumer, id("purex/uzh"));
 
+        GenericMachineRecipeBuilder.purex("purex.flashgold", 600, 1_000)
+                .inputLegacyOre("billetGold198", 1)
+                .inputItem(item("pellet_charged"), 1)
+                .inputFluid(HbmFluids.AMAT, 1_000)
+                .outputItem(new ItemStack(item("billet_balefire_gold"), 2))
+                .sourceOrder(1)
+                .save(consumer, id("purex/flashgold"));
+
+        GenericMachineRecipeBuilder.purex("purex.flashlead", 600, 1_000)
+                .inputLegacyOre("billetLead209", 1)
+                .inputItem(item("billet_balefire_gold"), 1)
+                .inputFluid(HbmFluids.AMAT, 1_000)
+                .outputItem(item("billet_flashlead"))
+                .sourceOrder(2)
+                .save(consumer, id("purex/flashlead"));
+
+        pileRodPurex(consumer, "pilepu239", 4, 3,
+                new ItemStack(item("billet_pu239"), 2), item("billet_uranium"));
+        pileRodPurex(consumer, "pilergp", 5, 4,
+                new ItemStack(item("billet_pu_mix"), 2), item("billet_nuclear_waste"));
+        pileRodPurex(consumer, "pilewaste", 6, 5,
+                new ItemStack(item("billet_nuclear_waste"), 2), item("billet_polonium"));
+
         zirnoxPurex(consumer, "zirnoxnu", "waste_natural_uranium", 3,
                 out("nugget_u238", 1), out("nugget_pu_mix", 2), out("nugget_pu239", 1),
                 out("nuclear_waste_tiny", 2));
@@ -3228,6 +3260,21 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .inputItem(ModBlocks.SAND_LEAD.get(), 1)
                 .inputFluid(wasteFluid, 1_000)
                 .outputItem(new ItemStack(item("nuclear_waste_vitrified"), outputCount))
+                .sourceOrder(sourceOrder)
+                .save(consumer, id("purex/" + name));
+    }
+
+    private static void pileRodPurex(Consumer<FinishedRecipe> consumer, String name, int legacyMeta,
+            int sourceOrder, ItemStack firstOutput, ItemLike secondOutput) {
+        GenericMachineRecipeBuilder.purex("purex." + name, 40, 100)
+                .inputLegacyMeta(LegacyMetaItemMappings.PILE_ROD, legacyMeta, 1)
+                .inputFluid(HbmFluids.SULFURIC_ACID, 100)
+                .outputItem(firstOutput)
+                .outputItem(secondOutput)
+                .icon(LegacyMetaItemMappings.stack(LegacyMetaItemMappings.PILE_ROD, legacyMeta, 1)
+                        .orElseThrow(() -> new IllegalStateException("Missing pile rod mapping for meta " + legacyMeta)))
+                .nameWrapper("purex.recycle")
+                .autoSwitchGroup("autoswitch.pile")
                 .sourceOrder(sourceOrder)
                 .save(consumer, id("purex/" + name));
     }
@@ -4734,6 +4781,17 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('R', block("deco_rbmk_smooth"))
                 .unlockedBy("has_deco_rbmk_smooth", has(block("deco_rbmk_smooth")))
                 .save(consumer, id("rbmk/rbmk_blank_from_deco_rbmk_smooth"));
+
+        // CraftingManager: RBMK blank -> decorative shell, then the smooth shell.
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.BUILDING_BLOCKS, ModBlocks.DECO_RBMK.get(), 8)
+                .requires(ModBlocks.RBMK_BLANK.get())
+                .unlockedBy("has_rbmk_blank", has(ModBlocks.RBMK_BLANK.get()))
+                .save(consumer, id("rbmk/deco_rbmk"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.BUILDING_BLOCKS, ModBlocks.DECO_RBMK_SMOOTH.get())
+                .requires(ModBlocks.DECO_RBMK.get())
+                .unlockedBy("has_deco_rbmk", has(ModBlocks.DECO_RBMK.get()))
+                .save(consumer, id("rbmk/deco_rbmk_smooth"));
 
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.RBMK_MODERATOR.get())
                 .pattern(" G ")
@@ -8193,6 +8251,11 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_gh336_billet", has(item("billet_gh336")))
                 .save(consumer, id("parts/ingot_gh336_from_billets"));
 
+        billetPair(consumer, "billet_beryllium", "ingot_beryllium", "nugget_beryllium");
+        billetPair(consumer, "billet_pu240", "ingot_pu240", "nugget_pu240");
+        billetPair(consumer, "billet_silicon", "ingot_silicon", "nugget_silicon");
+        billetPair(consumer, "billet_solinium", "ingot_solinium", "nugget_solinium");
+
         storageBlockPair(consumer, "block_fluorite", "fluorite");
         storageBlockPair(consumer, "block_niter", "niter");
         storageBlockPair(consumer, "block_steel", "ingot_steel");
@@ -8207,6 +8270,30 @@ public final class HbmRecipeProvider extends RecipeProvider {
         storageBlockPair(consumer, "block_waste", "nuclear_waste");
         storageBlockPair(consumer, "block_beryllium", "ingot_beryllium");
         storageBlockPair(consumer, "block_schrabidium", "ingot_schrabidium");
+        storageBlockPair(consumer, "block_aluminium", "ingot_aluminium");
+        storageBlockPair(consumer, "block_graphite", "ingot_graphite");
+        storageBlockPair(consumer, "block_boron", "ingot_boron");
+        storageBlockPair(consumer, "block_schraranium", "ingot_schraranium");
+        storageBlockPair(consumer, "block_lanthanium", "ingot_lanthanium");
+        storageBlockPair(consumer, "block_ra226", "ingot_ra226");
+        storageBlockPair(consumer, "block_actinium", "ingot_actinium");
+        storageBlockPair(consumer, "block_schrabidate", "ingot_schrabidate");
+        storageBlockPair(consumer, "block_coltan", "fragment_coltan");
+        storageBlockPair(consumer, "block_smore", "ingot_smore");
+        storageBlockPair(consumer, "block_semtex", "ingot_semtex");
+        storageBlockPair(consumer, "block_c4", "ingot_c4");
+        storageBlockPair(consumer, "block_polymer", "ingot_polymer");
+        storageBlockPair(consumer, "block_bakelite", "ingot_bakelite");
+        storageBlockPair(consumer, "block_rubber", "ingot_rubber");
+        storageBlockPair(consumer, "block_cadmium", "ingot_cadmium");
+        storageBlockPair(consumer, "block_tcalloy", "ingot_tcalloy");
+        storageBlockPair(consumer, "block_cdalloy", "ingot_cdalloy");
+        storageBlockPair(consumer, "block_pu_mix", "ingot_pu_mix");
+        storageBlockPair(consumer, "block_bismuth", "ingot_bismuth");
+        storageBlockPair(consumer, "block_tantalium", "ingot_tantalium");
+        storageBlockPair(consumer, "block_zirconium", "ingot_zirconium");
+        storageBlockPair(consumer, "block_waste_vitrified", "nuclear_waste_vitrified");
+        storageBlockPair(consumer, "block_fallout", "fallout");
         cokeBlockPair(consumer, "coal", "coke_coal", 0);
         cokeBlockPair(consumer, "lignite", "coke_lignite", 1);
         cokeBlockPair(consumer, "petroleum", "coke_petroleum", 2);
@@ -8291,6 +8378,22 @@ public final class HbmRecipeProvider extends RecipeProvider {
         nuggetIngotPair(consumer, "ingot_arsenic", "nugget_arsenic");
         nuggetIngotPair(consumer, "ingot_dineutronium", "nugget_dineutronium");
         nuggetIngotPair(consumer, "ingot_niobium", "nugget_niobium");
+        nuggetIngotPair(consumer, "ingot_co60", "nugget_co60");
+        nuggetIngotPair(consumer, "ingot_sr90", "nugget_sr90");
+        nuggetIngotPair(consumer, "ingot_au198", "nugget_au198");
+        nuggetIngotPair(consumer, "ingot_pb209", "nugget_pb209");
+        nuggetIngotPair(consumer, "ingot_ra226", "nugget_ra226");
+        nuggetIngotPair(consumer, "ingot_actinium", "nugget_actinium");
+        nuggetIngotPair(consumer, "ingot_pu241", "nugget_pu241");
+        nuggetIngotPair(consumer, "ingot_am241", "nugget_am241");
+        nuggetIngotPair(consumer, "ingot_am242", "nugget_am242");
+        nuggetIngotPair(consumer, "ingot_americium_fuel", "nugget_americium_fuel");
+        nuggetIngotPair(consumer, "ingot_neptunium_fuel", "nugget_neptunium_fuel");
+        nuggetIngotPair(consumer, "ingot_bismuth", "nugget_bismuth");
+        nuggetIngotPair(consumer, "ingot_tantalium", "nugget_tantalium");
+        nuggetIngotPair(consumer, "ingot_zirconium", "nugget_zirconium");
+        nuggetIngotPair(consumer, "nuclear_waste_vitrified", "nuclear_waste_vitrified_tiny");
+        nuggetIngotPair(consumer, "ingot_silicon", "nugget_silicon");
 
         ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.POWDER_FERTILIZER.get(), 4)
                 .requires(forgeTag("dusts/calcium"))
@@ -8573,6 +8676,32 @@ public final class HbmRecipeProvider extends RecipeProvider {
 
     private static void nuggetIngotPair(Consumer<FinishedRecipe> consumer, String ingotName, String nuggetName) {
         itemCompactPair(consumer, ingotName, nuggetName, ingotName + "_from_nuggets", nuggetName + "_from_ingot");
+    }
+
+    private static void billetPair(Consumer<FinishedRecipe> consumer, String billetName, String ingotName,
+            String nuggetName) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item(billetName))
+                .pattern("###")
+                .pattern("###")
+                .define('#', item(nuggetName))
+                .unlockedBy("has_" + nuggetName, has(item(nuggetName)))
+                .save(consumer, id("parts/" + billetName + "_from_nuggets"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item(nuggetName), 6)
+                .requires(item(billetName))
+                .unlockedBy("has_" + billetName, has(item(billetName)))
+                .save(consumer, id("parts/" + nuggetName + "_from_billet"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item(ingotName), 2)
+                .requires(item(billetName), 3)
+                .unlockedBy("has_" + billetName, has(item(billetName)))
+                .save(consumer, id("parts/" + ingotName + "_from_billets"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item(billetName), 3)
+                .pattern("##")
+                .define('#', item(ingotName))
+                .unlockedBy("has_" + ingotName, has(item(ingotName)))
+                .save(consumer, id("parts/" + billetName + "_from_ingots"));
     }
 
     private static void itemCompactPair(Consumer<FinishedRecipe> consumer, String oneName, String nineName,
@@ -9128,6 +9257,234 @@ public final class HbmRecipeProvider extends RecipeProvider {
     }
 
     private static void legacyPartRecipes(Consumer<FinishedRecipe> consumer) {
+        // 1.7.10 CraftingManager: plate_polymer, 2x2/2x1 source variants.
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("plate_polymer"), 8)
+                .pattern("PP")
+                .define('P', forgeTag("ingots/any_plastic"))
+                .unlockedBy("has_any_plastic", has(forgeTag("ingots/any_plastic")))
+                .save(consumer, id("parts/plate_polymer_from_plastic"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("plate_polymer"), 8)
+                .pattern("RR")
+                .define('R', forgeTag("ingots/any_rubber"))
+                .unlockedBy("has_any_rubber", has(forgeTag("ingots/any_rubber")))
+                .save(consumer, id("parts/plate_polymer_from_rubber"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("plate_polymer"), 16)
+                .pattern("FF")
+                .define('F', forgeTag("ingots/fiberglass"))
+                .unlockedBy("has_fiberglass", has(forgeTag("ingots/fiberglass")))
+                .save(consumer, id("parts/plate_polymer_from_fiberglass"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("plate_polymer"), 16)
+                .pattern("AA")
+                .define('A', forgeTag("ingots/asbestos"))
+                .unlockedBy("has_asbestos", has(forgeTag("ingots/asbestos")))
+                .save(consumer, id("parts/plate_polymer_from_asbestos"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("plate_polymer"), 4)
+                .pattern("SWS")
+                .define('S', Items.STRING)
+                .define('W', ItemTags.WOOL)
+                .unlockedBy("has_string", has(Items.STRING))
+                .save(consumer, id("parts/plate_polymer_from_string_wool"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("plate_polymer"), 4)
+                .pattern("BB")
+                .define('B', Items.BRICK)
+                .unlockedBy("has_brick", has(Items.BRICK))
+                .save(consumer, id("parts/plate_polymer_from_brick"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("plate_polymer"), 4)
+                .pattern("BB")
+                .define('B', Items.NETHER_BRICK)
+                .unlockedBy("has_nether_brick", has(Items.NETHER_BRICK))
+                .save(consumer, id("parts/plate_polymer_from_nether_brick"));
+
+        // 1.7.10 CraftingManager: coil_copper/coil_tungsten, iron or steel core.
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("coil_copper"))
+                .pattern("WWW")
+                .pattern("WIW")
+                .pattern("WWW")
+                .define('W', forgeTag("wires/mingrade"))
+                .define('I', forgeTag("ingots/iron"))
+                .unlockedBy("has_mingrade_wire", has(forgeTag("wires/mingrade")))
+                .save(consumer, id("parts/coil_copper_iron"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("coil_copper"))
+                .pattern("WWW")
+                .pattern("WIW")
+                .pattern("WWW")
+                .define('W', forgeTag("wires/mingrade"))
+                .define('I', forgeTag("ingots/steel"))
+                .unlockedBy("has_mingrade_wire", has(forgeTag("wires/mingrade")))
+                .save(consumer, id("parts/coil_copper_steel"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("coil_tungsten"))
+                .pattern("WWW")
+                .pattern("WIW")
+                .pattern("WWW")
+                .define('W', forgeTag("wires/tungsten"))
+                .define('I', forgeTag("ingots/iron"))
+                .unlockedBy("has_tungsten_wire", has(forgeTag("wires/tungsten")))
+                .save(consumer, id("parts/coil_tungsten_iron"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("coil_tungsten"))
+                .pattern("WWW")
+                .pattern("WIW")
+                .pattern("WWW")
+                .define('W', forgeTag("wires/tungsten"))
+                .define('I', forgeTag("ingots/steel"))
+                .unlockedBy("has_tungsten_wire", has(forgeTag("wires/tungsten")))
+                .save(consumer, id("parts/coil_tungsten_steel"));
+
+        // 1.7.10 CraftingManager: primitive circuit components.
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("circuit_vacuum_tube"))
+                .pattern("G")
+                .pattern("W")
+                .pattern("I")
+                .define('G', forgeTag("glass_panes"))
+                .define('W', forgeTag("wires/tungsten"))
+                .define('I', item("plate_polymer"))
+                .unlockedBy("has_polymer_plate", has(item("plate_polymer")))
+                .save(consumer, id("parts/circuit_vacuum_tube_tungsten"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("circuit_vacuum_tube"))
+                .pattern("G")
+                .pattern("W")
+                .pattern("I")
+                .define('G', forgeTag("glass_panes"))
+                .define('W', forgeTag("wires/carbon"))
+                .define('I', item("plate_polymer"))
+                .unlockedBy("has_polymer_plate", has(item("plate_polymer")))
+                .save(consumer, id("parts/circuit_vacuum_tube_carbon"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("circuit_capacitor"))
+                .pattern("I")
+                .pattern("N")
+                .pattern("W")
+                .define('I', item("plate_polymer"))
+                .define('N', forgeTag("nuggets/niobium"))
+                .define('W', forgeTag("wires/aluminium"))
+                .unlockedBy("has_niobium_nugget", has(forgeTag("nuggets/niobium")))
+                .save(consumer, id("parts/circuit_capacitor_aluminium"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("circuit_capacitor"))
+                .pattern("I")
+                .pattern("N")
+                .pattern("W")
+                .define('I', item("plate_polymer"))
+                .define('N', forgeTag("nuggets/niobium"))
+                .define('W', forgeTag("wires/copper"))
+                .unlockedBy("has_niobium_nugget", has(forgeTag("nuggets/niobium")))
+                .save(consumer, id("parts/circuit_capacitor_copper"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("circuit_capacitor"), 2)
+                .pattern("IAI")
+                .pattern("W W")
+                .define('I', item("plate_polymer"))
+                .define('A', forgeTag("dusts/aluminium"))
+                .define('W', forgeTag("wires/aluminium"))
+                .unlockedBy("has_aluminium_dust", has(forgeTag("dusts/aluminium")))
+                .save(consumer, id("parts/circuit_capacitor_aluminium_dust"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("circuit_capacitor"), 2)
+                .pattern("IAI")
+                .pattern("W W")
+                .define('I', item("plate_polymer"))
+                .define('A', forgeTag("dusts/aluminium"))
+                .define('W', forgeTag("wires/copper"))
+                .unlockedBy("has_aluminium_dust", has(forgeTag("dusts/aluminium")))
+                .save(consumer, id("parts/circuit_capacitor_copper_dust"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("circuit_capacitor_tantalium"))
+                .pattern("I")
+                .pattern("N")
+                .pattern("W")
+                .define('I', item("plate_polymer"))
+                .define('N', forgeTag("nuggets/tantalium"))
+                .define('W', forgeTag("wires/aluminium"))
+                .unlockedBy("has_tantalium_nugget", has(forgeTag("nuggets/tantalium")))
+                .save(consumer, id("parts/circuit_capacitor_tantalium_aluminium"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("circuit_capacitor_tantalium"))
+                .pattern("I")
+                .pattern("N")
+                .pattern("W")
+                .define('I', item("plate_polymer"))
+                .define('N', forgeTag("nuggets/tantalium"))
+                .define('W', forgeTag("wires/copper"))
+                .unlockedBy("has_tantalium_nugget", has(forgeTag("nuggets/tantalium")))
+                .save(consumer, id("parts/circuit_capacitor_tantalium_copper"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("circuit_pcb"))
+                .pattern("I")
+                .pattern("P")
+                .define('I', item("plate_polymer"))
+                .define('P', forgeTag("plates/copper"))
+                .unlockedBy("has_copper_plate", has(forgeTag("plates/copper")))
+                .save(consumer, id("parts/circuit_pcb_copper"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("circuit_pcb"), 4)
+                .pattern("I")
+                .pattern("P")
+                .define('I', item("plate_polymer"))
+                .define('P', forgeTag("plates/gold"))
+                .unlockedBy("has_gold_plate", has(forgeTag("plates/gold")))
+                .save(consumer, id("parts/circuit_pcb_gold"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("circuit_controller_chassis"))
+                .pattern("PPP")
+                .pattern("CBB")
+                .pattern("PPP")
+                .define('P', forgeTag("ingots/any_plastic"))
+                .define('C', item("crt_display"))
+                .define('B', item("circuit_pcb"))
+                .unlockedBy("has_pcb", has(item("circuit_pcb")))
+                .save(consumer, id("parts/circuit_controller_chassis"));
+
+        // 1.7.10 CraftingManager: the active material-generated bolt recipes.
+        legacyBoltRecipe(consumer, "lead", "ingots/lead");
+        legacyBoltRecipe(consumer, "steel", "ingots/steel");
+        legacyBoltRecipe(consumer, "tungsten", "ingots/tungsten");
+        legacyBoltRecipe(consumer, "dura_steel", "ingots/dura_steel");
+
+        // 1.7.10 CraftingManager: the separately registered Numitron circuit.
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("circuit_numitron"), 3)
+                .pattern("G")
+                .pattern("W")
+                .pattern("I")
+                .define('G', forgeTag("glass_panes"))
+                .define('W', item("coil_tungsten"))
+                .define('I', forgeTag("plates/copper"))
+                .unlockedBy("has_tungsten_coil", has(item("coil_tungsten")))
+                .save(consumer, id("parts/circuit_numitron"));
+
+        // 1.7.10 CraftingManager: particle accelerator capsule preparation.
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.PARTICLE_EMPTY.get(), 2)
+                .pattern("STS")
+                .pattern("G G")
+                .pattern("STS")
+                .define('S', forgeTag("cast_plates/lead"))
+                .define('T', item("coil_gold"))
+                .define('G', forgeTag("glass_panes"))
+                .unlockedBy("has_gold_coil", has(item("coil_gold")))
+                .save(consumer, id("parts/particle_empty"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("particle_copper"))
+                .requires(ModItems.PARTICLE_EMPTY.get())
+                .requires(forgeTag("dusts/copper"))
+                .requires(item("pellet_charged"))
+                .unlockedBy("has_particle_empty", has(ModItems.PARTICLE_EMPTY.get()))
+                .save(consumer, id("parts/particle_copper"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("particle_lead"))
+                .requires(ModItems.PARTICLE_EMPTY.get())
+                .requires(forgeTag("dusts/lead"))
+                .requires(item("pellet_charged"))
+                .unlockedBy("has_particle_empty", has(ModItems.PARTICLE_EMPTY.get()))
+                .save(consumer, id("parts/particle_lead"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("shimmer_handle"))
                 .pattern("GP")
                 .pattern("GP")
@@ -9216,16 +9573,33 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_steel_bolt", has(forgeTag("bolts/steel")))
                 .save(consumer, id("parts/bolt_spike"));
 
-        // 1.7.10 CraftingManager: ModBlocks.fan, BPB / PRP / BPB.
-        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModBlocks.FAN.get())
-                .pattern("BPB")
-                .pattern("PRP")
-                .pattern("BPB")
-                .define('B', forgeTag("bolts/steel"))
-                .define('P', forgeTag("plates/iron"))
-                .define('R', Items.REDSTONE)
-                .unlockedBy("has_steel_bolt", has(forgeTag("bolts/steel")))
-                .save(consumer, id("machines/fan"));
+        // 1.7.10 CraftingManager: large gears and sawblade.
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.GEAR_LARGE.get())
+                .pattern("III")
+                .pattern("ICI")
+                .pattern("III")
+                .define('I', forgeTag("plates/iron"))
+                .define('C', forgeTag("ingots/copper"))
+                .unlockedBy("has_iron_plate", has(forgeTag("plates/iron")))
+                .save(consumer, id("parts/gear_large"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.GEAR_LARGE_STEEL.get())
+                .pattern("III")
+                .pattern("ICI")
+                .pattern("III")
+                .define('I', forgeTag("plates/steel"))
+                .define('C', forgeTag("ingots/titanium"))
+                .unlockedBy("has_steel_plate", has(forgeTag("plates/steel")))
+                .save(consumer, id("parts/gear_large_steel"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.SAWBLADE.get())
+                .pattern("III")
+                .pattern("ICI")
+                .pattern("III")
+                .define('I', forgeTag("plates/steel"))
+                .define('C', forgeTag("ingots/iron"))
+                .unlockedBy("has_steel_plate", has(forgeTag("plates/steel")))
+                .save(consumer, id("parts/sawblade"));
 
         JsonObject scrapsSplit = new JsonObject();
         scrapsSplit.addProperty("type", id("scraps_split").toString());
@@ -9326,6 +9700,82 @@ public final class HbmRecipeProvider extends RecipeProvider {
     }
 
     /**
+     * 1.7.10 WeaponRecipes: 240mm shells and fire-extinguisher tanks.
+     * These are ordinary workbench recipes, so keep them as standard datapack
+     * crafting recipes rather than routing them through a machine serializer.
+     */
+    private static void legacyAmmoCraftingRecipes(Consumer<FinishedRecipe> consumer) {
+        for (String propellant : new String[] {"gunpowder", "ballistite", "cordite"}) {
+            int count = "cordite".equals(propellant) ? 6 : 4;
+            ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.AMMO_SHELL_STOCK.get(), count)
+                    .pattern(" T ").pattern("GHG").pattern("CCC")
+                    .define('T', ModBlocks.TNT_NTM.get())
+                    .define('G', "gunpowder".equals(propellant) ? Items.GUNPOWDER : item(propellant))
+                    .define('H', forgeTag("shells/steel"))
+                    .define('C', forgeTag("ingots/copper"))
+                    .unlockedBy("has_" + propellant, has("gunpowder".equals(propellant)
+                            ? Items.GUNPOWDER : item(propellant)))
+                    .save(consumer, id("weapon/ammo_shell_stock_" + propellant));
+
+            ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.AMMO_SHELL_EXPLOSIVE.get(), count)
+                    .pattern(" T ").pattern("GHG").pattern("CCC")
+                    .define('T', forgeTag("ingots/any_plastic_explosive"))
+                    .define('G', "gunpowder".equals(propellant) ? Items.GUNPOWDER : item(propellant))
+                    .define('H', forgeTag("shells/steel"))
+                    .define('C', forgeTag("ingots/copper"))
+                    .unlockedBy("has_" + propellant, has("gunpowder".equals(propellant)
+                            ? Items.GUNPOWDER : item(propellant)))
+                    .save(consumer, id("weapon/ammo_shell_explosive_" + propellant));
+
+            ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.AMMO_SHELL_APFSDS_T.get(), count)
+                    .pattern(" I ").pattern("GIG").pattern("CCC")
+                    .define('I', forgeTag("ingots/tungsten"))
+                    .define('G', "gunpowder".equals(propellant) ? Items.GUNPOWDER : item(propellant))
+                    .define('C', forgeTag("ingots/copper"))
+                    .unlockedBy("has_" + propellant, has("gunpowder".equals(propellant)
+                            ? Items.GUNPOWDER : item(propellant)))
+                    .save(consumer, id("weapon/ammo_shell_apfsds_t_" + propellant));
+
+            ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.AMMO_SHELL_APFSDS_DU.get(), count)
+                    .pattern(" I ").pattern("GIG").pattern("CCC")
+                    .define('I', forgeTag("ingots/u238"))
+                    .define('G', "gunpowder".equals(propellant) ? Items.GUNPOWDER : item(propellant))
+                    .define('C', forgeTag("ingots/copper"))
+                    .unlockedBy("has_" + propellant, has("gunpowder".equals(propellant)
+                            ? Items.GUNPOWDER : item(propellant)))
+                    .save(consumer, id("weapon/ammo_shell_apfsds_du_" + propellant));
+        }
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.AMMO_SHELL_W9.get())
+                .pattern(" P ").pattern("NSN").pattern(" P ")
+                .define('P', forgeTag("nuggets/pu239"))
+                .define('N', item("neutron_reflector"))
+                .define('S', ModItems.AMMO_SHELL_EXPLOSIVE.get())
+                .unlockedBy("has_explosive_shell", has(ModItems.AMMO_SHELL_EXPLOSIVE.get()))
+                .save(consumer, id("weapon/ammo_shell_w9"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.AMMO_FIREEXT_0.get())
+                .pattern(" P ").pattern("BDB").pattern(" P ")
+                .define('P', forgeTag("plates/steel"))
+                .define('B', forgeTag("bolts/steel"))
+                .define('D', HbmFluidContainerIngredient.of(HbmFluids.WATER, 1_000))
+                .unlockedBy("has_water", has(item("fluid_tank_full")))
+                .save(consumer, id("weapon/ammo_fireext_water"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.AMMO_FIREEXT_1.get())
+                .pattern(" N ").pattern("NFN").pattern(" N ")
+                .define('N', forgeTag("dusts/niter"))
+                .define('F', ModItems.AMMO_FIREEXT_0.get())
+                .unlockedBy("has_fireext_water", has(ModItems.AMMO_FIREEXT_0.get()))
+                .save(consumer, id("weapon/ammo_fireext_foam"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.AMMO_FIREEXT_2.get())
+                .pattern("NNN").pattern("NFN").pattern("NNN")
+                .define('N', ModBlocks.SAND_BORON.get())
+                .define('F', ModItems.AMMO_FIREEXT_0.get())
+                .unlockedBy("has_fireext_water", has(ModItems.AMMO_FIREEXT_0.get()))
+                .save(consumer, id("weapon/ammo_fireext_sand"));
+    }
+
+    /**
      * Workbench and anvil recipes for the small group of ordinary legacy items
      * which were absent from the initial modern registry sweep.  The recipes
      * are kept here as datagen sources and are also materialized under
@@ -9349,6 +9799,46 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .requires(Items.WHITE_DYE)
                 .unlockedBy("has_tar", has(forgeTag("any/tar")))
                 .save(consumer, id("consumables/bdcl"));
+
+        // 1.7.10 CraftingManager: the two MRE variants.
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, ModItems.DEFINITELYFOOD.get(), 4)
+                .requires(forgeTag("ingots/any_rubber"))
+                .requires(Items.WHEAT)
+                .requires(Items.ROTTEN_FLESH)
+                .requires(ItemTags.SAPLINGS)
+                .unlockedBy("has_any_rubber", has(forgeTag("ingots/any_rubber")))
+                .save(consumer, id("consumables/definitelyfood_from_sapling"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, ModItems.DEFINITELYFOOD.get(), 4)
+                .requires(forgeTag("ingots/any_rubber"))
+                .requires(Items.WHEAT)
+                .requires(Items.ROTTEN_FLESH)
+                .requires(Items.WHEAT_SEEDS, 3)
+                .unlockedBy("has_any_rubber", has(forgeTag("ingots/any_rubber")))
+                .save(consumer, id("consumables/definitelyfood_from_wheat_seeds"));
+
+        // 1.7.10 CraftingManager: herbal paste.
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.FOOD, ModItems.PILL_HERBAL.get())
+                .requires(forgeTag("dusts/coal"))
+                .requires(Items.POISONOUS_POTATO)
+                .requires(Items.NETHER_WART)
+                .requires(ModBlocks.PLANT_FLOWER_FOXGLOVE.get())
+                .unlockedBy("has_foxglove", has(ModBlocks.PLANT_FLOWER_FOXGLOVE.get()))
+                .save(consumer, id("consumables/pill_herbal"));
+
+        // 1.7.10 CraftingManager: yellow-painted nuclear waste block.
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.BUILDING_BLOCKS, block("block_waste_painted"))
+                .requires(forgeTag("dyes/yellow"))
+                .requires(block("block_waste"))
+                .unlockedBy("has_nuclear_waste_block", has(block("block_waste")))
+                .save(consumer, id("blocks/block_waste_painted"));
+
+        legacyFluidContainerShapelessRecipe(consumer, id("consumables/canister_full_lubricant"),
+                ModItems.CANISTER_FULL.get(), 2, HbmFluids.LUBRICANT, 1_000,
+                HbmFluidContainerIngredient.of(HbmFluids.HEATINGOIL, 1_000).toJson(),
+                HbmFluidContainerIngredient.of(HbmFluids.UNSATURATEDS, 1_000).toJson(),
+                ingredientItem(ModItems.CANISTER_EMPTY.get()), ingredientItem(ModItems.CANISTER_EMPTY.get()),
+                ingredientItem(ModItems.CHEMISTRY_SET.get()));
 
         ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.DEUTERIUM_FILTER.get())
                 .pattern("TST")
@@ -9482,6 +9972,199 @@ public final class HbmRecipeProvider extends RecipeProvider {
     }
 
     private static void legacyStructuralRecipes(Consumer<FinishedRecipe> consumer) {
+        // 1.7.10 CraftingManager: basic concrete and ducrete masonry.
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("reinforced_stone"), 4)
+                .pattern("FBF")
+                .pattern("BFB")
+                .pattern("FBF")
+                .define('F', Blocks.COBBLESTONE)
+                .define('B', Blocks.STONE)
+                .unlockedBy("has_cobblestone", has(Blocks.COBBLESTONE))
+                .save(consumer, id("blocks/reinforced_stone"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("concrete"), 4)
+                .pattern("CC")
+                .pattern("CC")
+                .define('C', block("concrete_smooth"))
+                .unlockedBy("has_smooth_concrete", has(block("concrete_smooth")))
+                .save(consumer, id("blocks/concrete"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("concrete_pillar"), 6)
+                .pattern("CBC")
+                .pattern("CBC")
+                .pattern("CBC")
+                .define('C', block("concrete_smooth"))
+                .define('B', Blocks.IRON_BARS)
+                .unlockedBy("has_smooth_concrete", has(block("concrete_smooth")))
+                .save(consumer, id("blocks/concrete_pillar"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("brick_concrete"), 4)
+                .pattern(" C ")
+                .pattern("CBC")
+                .pattern(" C ")
+                .define('C', block("concrete_smooth"))
+                .define('B', Items.CLAY_BALL)
+                .unlockedBy("has_smooth_concrete", has(block("concrete_smooth")))
+                .save(consumer, id("blocks/brick_concrete_from_smooth"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("brick_concrete"), 4)
+                .pattern(" C ")
+                .pattern("CBC")
+                .pattern(" C ")
+                .define('C', block("concrete"))
+                .define('B', Items.CLAY_BALL)
+                .unlockedBy("has_concrete", has(block("concrete")))
+                .save(consumer, id("blocks/brick_concrete_from_concrete"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("brick_concrete_mossy"), 8)
+                .pattern("CCC")
+                .pattern("CVC")
+                .pattern("CCC")
+                .define('C', block("brick_concrete"))
+                .define('V', Blocks.VINE)
+                .unlockedBy("has_concrete_bricks", has(block("brick_concrete")))
+                .save(consumer, id("blocks/brick_concrete_mossy"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("brick_concrete_cracked"), 6)
+                .pattern(" C ")
+                .pattern("C C")
+                .pattern(" C ")
+                .define('C', block("brick_concrete"))
+                .unlockedBy("has_concrete_bricks", has(block("brick_concrete")))
+                .save(consumer, id("blocks/brick_concrete_cracked"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("brick_concrete_broken"), 6)
+                .pattern(" C ")
+                .pattern("C C")
+                .pattern(" C ")
+                .define('C', block("brick_concrete_cracked"))
+                .unlockedBy("has_cracked_concrete_bricks", has(block("brick_concrete_cracked")))
+                .save(consumer, id("blocks/brick_concrete_broken"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("ducrete"), 4)
+                .pattern("DD")
+                .pattern("DD")
+                .define('D', block("ducrete_smooth"))
+                .unlockedBy("has_smooth_ducrete", has(block("ducrete_smooth")))
+                .save(consumer, id("blocks/ducrete"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("brick_ducrete"), 4)
+                .pattern("CDC")
+                .pattern("DLD")
+                .pattern("CDC")
+                .define('D', block("ducrete_smooth"))
+                .define('C', Items.CLAY_BALL)
+                .define('L', forgeTag("plates/lead"))
+                .unlockedBy("has_smooth_ducrete", has(block("ducrete_smooth")))
+                .save(consumer, id("blocks/brick_ducrete_from_smooth"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("brick_ducrete"), 4)
+                .pattern("CDC")
+                .pattern("DLD")
+                .pattern("CDC")
+                .define('D', block("ducrete"))
+                .define('C', Items.CLAY_BALL)
+                .define('L', forgeTag("plates/lead"))
+                .unlockedBy("has_ducrete", has(block("ducrete")))
+                .save(consumer, id("blocks/brick_ducrete_from_ducrete"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("reinforced_ducrete"), 4)
+                .pattern("DSD")
+                .pattern("SUS")
+                .pattern("DSD")
+                .define('D', block("brick_ducrete"))
+                .define('S', forgeTag("plates/steel"))
+                .define('U', forgeTag("billets/u238"))
+                .unlockedBy("has_ducrete_bricks", has(block("brick_ducrete")))
+                .save(consumer, id("blocks/reinforced_ducrete"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("brick_obsidian"), 4)
+                .pattern("FBF")
+                .pattern("BFB")
+                .pattern("FBF")
+                .define('F', Blocks.IRON_BARS)
+                .define('B', Blocks.OBSIDIAN)
+                .unlockedBy("has_obsidian", has(Blocks.OBSIDIAN))
+                .save(consumer, id("blocks/brick_obsidian"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("brick_light"), 4)
+                .pattern("FBF")
+                .pattern("BFB")
+                .pattern("FBF")
+                .define('F', Blocks.OAK_FENCE)
+                .define('B', Items.BRICK)
+                .unlockedBy("has_brick", has(Items.BRICK))
+                .save(consumer, id("blocks/brick_light"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("brick_asbestos"), 2)
+                .pattern(" A ")
+                .pattern("ABA")
+                .pattern(" A ")
+                .define('A', forgeTag("ingots/asbestos"))
+                .define('B', block("brick_light"))
+                .unlockedBy("has_asbestos", has(forgeTag("ingots/asbestos")))
+                .save(consumer, id("blocks/brick_asbestos"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("reinforced_brick"), 4)
+                .pattern("FBF")
+                .pattern("BFB")
+                .pattern("FBF")
+                .define('F', Blocks.IRON_BARS)
+                .define('B', block("brick_concrete"))
+                .unlockedBy("has_concrete_bricks", has(block("brick_concrete")))
+                .save(consumer, id("blocks/reinforced_brick"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("brick_compound"), 4)
+                .pattern("FBF")
+                .pattern("BTB")
+                .pattern("FBF")
+                .define('F', forgeTag("bolts/steel"))
+                .define('B', block("reinforced_brick"))
+                .define('T', forgeTag("any/tar"))
+                .unlockedBy("has_reinforced_brick", has(block("reinforced_brick")))
+                .save(consumer, id("blocks/brick_compound"));
+
+        // 1.7.10 CraftingManager: gneiss and basalt masonry chains.
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("gneiss_tile"), 4)
+                .pattern("CC")
+                .pattern("CC")
+                .define('C', block("stone_gneiss"))
+                .unlockedBy("has_gneiss", has(block("stone_gneiss")))
+                .save(consumer, id("blocks/gneiss_tile"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("gneiss_brick"), 4)
+                .pattern("CC")
+                .pattern("CC")
+                .define('C', block("gneiss_tile"))
+                .unlockedBy("has_gneiss_tile", has(block("gneiss_tile")))
+                .save(consumer, id("blocks/gneiss_brick"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.BUILDING_BLOCKS, block("gneiss_chiseled"))
+                .requires(block("gneiss_tile"))
+                .unlockedBy("has_gneiss_tile", has(block("gneiss_tile")))
+                .save(consumer, id("blocks/gneiss_chiseled"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("basalt_polished"), 4)
+                .pattern("CC")
+                .pattern("CC")
+                .define('C', block("basalt_smooth"))
+                .unlockedBy("has_smooth_basalt", has(block("basalt_smooth")))
+                .save(consumer, id("blocks/basalt_polished"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("basalt_brick"), 4)
+                .pattern("CC")
+                .pattern("CC")
+                .define('C', block("basalt_polished"))
+                .unlockedBy("has_polished_basalt", has(block("basalt_polished")))
+                .save(consumer, id("blocks/basalt_brick"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("basalt_tiles"), 4)
+                .pattern("CC")
+                .pattern("CC")
+                .define('C', block("basalt_brick"))
+                .unlockedBy("has_basalt_bricks", has(block("basalt_brick")))
+                .save(consumer, id("blocks/basalt_tiles"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.STEEL_BEAM.get(), 8)
                 .pattern("S")
                 .pattern("S")
@@ -9518,6 +10201,74 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .define('S', ModBlocks.STEEL_GRATE.get())
                 .unlockedBy("has_steel_grate", has(ModBlocks.STEEL_GRATE.get()))
                 .save(consumer, id("blocks/steel_grate_wide"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.STEEL_POLES.get(), 16)
+                .pattern("S S")
+                .pattern("SSS")
+                .pattern("S S")
+                .define('S', forgeTag("ingots/steel"))
+                .unlockedBy("has_steel_ingot", has(forgeTag("ingots/steel")))
+                .save(consumer, id("blocks/steel_poles"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.STEEL_WALL.get(), 4)
+                .pattern("SSS")
+                .pattern("SSS")
+                .define('S', forgeTag("ingots/steel"))
+                .unlockedBy("has_steel_ingot", has(forgeTag("ingots/steel")))
+                .save(consumer, id("blocks/steel_wall"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.STEEL_ROOF.get(), 2)
+                .pattern("SSS")
+                .define('S', forgeTag("ingots/steel"))
+                .unlockedBy("has_steel_ingot", has(forgeTag("ingots/steel")))
+                .save(consumer, id("blocks/steel_roof"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.POLE_TOP.get())
+                .pattern("T T")
+                .pattern("TRT")
+                .pattern("BBB")
+                .define('T', forgeTag("ingots/tungsten"))
+                .define('R', forgeTag("ingots/mingrade"))
+                .define('B', forgeTag("ingots/beryllium"))
+                .unlockedBy("has_tungsten_ingot", has(forgeTag("ingots/tungsten")))
+                .save(consumer, id("blocks/pole_top"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("rebar"), 8)
+                .pattern("BB")
+                .pattern("BB")
+                .define('B', forgeTag("bolts/steel"))
+                .unlockedBy("has_steel_bolt", has(forgeTag("bolts/steel")))
+                .save(consumer, id("blocks/rebar"));
+
+        // 1.7.10 CraftingManager: two steel walls make one steel corner.
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.BUILDING_BLOCKS, block("steel_corner"))
+                .requires(block("steel_wall"), 2)
+                .unlockedBy("has_steel_wall", has(block("steel_wall")))
+                .save(consumer, id("blocks/steel_corner"));
+
+        // 1.7.10 CraftingManager: asphalt and fallout block conversions.
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.BUILDING_BLOCKS, block("asphalt_light"))
+                .requires(ModBlocks.ASPHALT.get())
+                .requires(Items.GLOWSTONE_DUST)
+                .unlockedBy("has_asphalt", has(ModBlocks.ASPHALT.get()))
+                .save(consumer, id("blocks/asphalt_light"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.BUILDING_BLOCKS, ModBlocks.ASPHALT.get())
+                .requires(block("asphalt_light"))
+                .unlockedBy("has_asphalt_light", has(block("asphalt_light")))
+                .save(consumer, id("blocks/asphalt_from_light"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.BUILDING_BLOCKS, ModBlocks.WASTE_TRINITITE.get())
+                .requires(Blocks.SAND)
+                .requires(item("trinitite"))
+                .unlockedBy("has_trinitite", has(item("trinitite")))
+                .save(consumer, id("blocks/waste_trinitite"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.BUILDING_BLOCKS, ModBlocks.WASTE_TRINITITE_RED.get())
+                .requires(Blocks.RED_SAND)
+                .requires(item("trinitite"))
+                .unlockedBy("has_trinitite", has(item("trinitite")))
+                .save(consumer, id("blocks/waste_trinitite_red"));
 
         ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.STEEL_GRATE.get())
                 .pattern("SS")
@@ -10962,7 +11713,62 @@ public final class HbmRecipeProvider extends RecipeProvider {
         });
     }
 
+    private static void legacyFluidContainerShapelessRecipe(Consumer<FinishedRecipe> consumer,
+            ResourceLocation recipeId, ItemLike resultItem, int resultCount, FluidType outputFluid,
+            int outputAmount, JsonElement... ingredients) {
+        consumer.accept(new FinishedRecipe() {
+            @Override
+            public void serializeRecipeData(JsonObject json) {
+                json.addProperty("category", "misc");
+                JsonArray ingredientArray = new JsonArray();
+                for (JsonElement ingredient : ingredients) {
+                    ingredientArray.add(ingredient.deepCopy());
+                }
+                json.add("ingredients", ingredientArray);
+
+                JsonObject result = new JsonObject();
+                result.addProperty("item", HbmRegistryUtil.itemKey(resultItem.asItem()).toString());
+                if (resultCount > 1) {
+                    result.addProperty("count", resultCount);
+                }
+                result.addProperty("nbt", fluidContainerStack(resultItem, resultCount, outputFluid, outputAmount, 0)
+                        .getTag().toString());
+                json.add("result", result);
+            }
+
+            @Override
+            public ResourceLocation getId() {
+                return recipeId;
+            }
+
+            @Override
+            public RecipeSerializer<?> getType() {
+                return ModRecipes.LEGACY_NBT_SHAPELESS.get();
+            }
+
+            @Nullable
+            @Override
+            public JsonObject serializeAdvancement() {
+                return null;
+            }
+
+            @Nullable
+            @Override
+            public ResourceLocation getAdvancementId() {
+                return null;
+            }
+        });
+    }
+
     private static void reactorAssemblyRecipes(Consumer<FinishedRecipe> consumer) {
+        GenericMachineRecipeBuilder.assembly("ass.pileblock", 20, 250)
+                .inputLegacyOre("plankWood", 1)
+                .inputLegacyOre("ingotGraphite", 4)
+                .inputLegacyOre("boltSteel", 2)
+                .outputItem(ModBlocks.PILE_BRICK.get())
+                .sourceOrder(165)
+                .save(consumer, id("assembly_machine/pile_brick"));
+
         GenericMachineRecipeBuilder.assembly("ass.cirnox", 600, 100)
                 .inputLegacyOre("shellSteel", 4)
                 .inputLegacyOre("pipeSteel", 8)
@@ -11099,6 +11905,34 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .outputItem(new ItemStack(ModBlocks.WATZ_END.get(), 3))
                 .sourceOrder(188)
                 .save(consumer, id("assembly_machine/watz_end"));
+
+        GenericMachineRecipeBuilder.assembly("ass.pilepabe", 40, 200)
+                .inputItem(item("billet_ra226be"), 3)
+                .outputLegacyMeta(LegacyMetaItemMappings.PILE_ROD, 0)
+                .autoSwitchGroup("autoswitch.pilerod")
+                .sourceOrder(45)
+                .save(consumer, id("assembly_machine/pile_rod_ra226be"));
+
+        GenericMachineRecipeBuilder.assembly("ass.pilepobe", 40, 200)
+                .inputItem(item("billet_po210be"), 3)
+                .outputLegacyMeta(LegacyMetaItemMappings.PILE_ROD, 1)
+                .autoSwitchGroup("autoswitch.pilerod")
+                .sourceOrder(46)
+                .save(consumer, id("assembly_machine/pile_rod_po210be"));
+
+        GenericMachineRecipeBuilder.assembly("ass.pilezr", 40, 200)
+                .inputLegacyOre("billetZirconium", 1)
+                .outputLegacyMeta(LegacyMetaItemMappings.PILE_ROD, 2, 3)
+                .autoSwitchGroup("autoswitch.pilerod")
+                .sourceOrder(47)
+                .save(consumer, id("assembly_machine/pile_rod_zirconium"));
+
+        GenericMachineRecipeBuilder.assembly("ass.pilenu", 40, 200)
+                .inputLegacyOre("billetUranium", 3)
+                .outputLegacyMeta(LegacyMetaItemMappings.PILE_ROD, 3)
+                .autoSwitchGroup("autoswitch.pilerod")
+                .sourceOrder(48)
+                .save(consumer, id("assembly_machine/pile_rod_uranium"));
     }
 
     private static void pwrAssemblyRecipes(Consumer<FinishedRecipe> consumer) {
@@ -12192,7 +13026,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
                         .inputLegacyOre("wireDenseBSCCO", 16).inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 11, 24)
                         .inputLegacyMeta(LegacyMetaItemMappings.PART_GENERIC, 3, 16)
                         .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 14, 1));
-        xSatelliteRecipe(consumer, "ray_scan", "ass.detectorsat", SatelliteItem.Variant.RAY_SCAN, 341,
+        xSatelliteRecipe(consumer, "ray_scan", "ass.rayscansat", SatelliteItem.Variant.RAY_SCAN, 341,
                 builder -> builder.inputLegacyOre("shellSaturnite", 16).inputItem(item("photo_panel"), 32)
                         .inputLegacyOre("wireDenseSchrabidium", 16).inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 15, 16)
                         .inputLegacyMeta(LegacyMetaItemMappings.PART_GENERIC, 3, 16)
@@ -12711,6 +13545,189 @@ public final class HbmRecipeProvider extends RecipeProvider {
                         GenericMachineRecipeBuilder.WeightedOutput.of(new ItemStack(Items.PAPER, 24), 95))
                 .sourceOrder(1)
                 .save(consumer, id("precass/beigeprints"));
+
+        int sourceOrder = 2;
+        precassPair(consumer, "chip", "precass.chip", 100, 200L, 90, 75, sourceOrder++,
+                LegacyMetaItemMappings.stack(LegacyMetaItemMappings.CIRCUIT, 5, 1).orElseThrow(),
+                builder -> builder
+                        .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 4, 1)
+                        .inputItem(item("plate_polymer"), 3)
+                        .inputLegacyOre("wireFineGold", 4)
+                        .pool("528.chip"));
+        precassPair(consumer, "chip_bismoid", "precass.chip_bismoid", 200, 1_000L, 75, 75, sourceOrder++,
+                LegacyMetaItemMappings.stack(LegacyMetaItemMappings.CIRCUIT, 6, 1).orElseThrow(),
+                builder -> builder
+                        .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 4, 4)
+                        .inputItem(item("plate_polymer"), 8)
+                        .inputLegacyOre("nuggetAnyBismoid", 2)
+                        .inputLegacyOre("wireFineGold", 4)
+                        .inputFluid(HbmFluids.PERFLUOROMETHYL, 500)
+                        .pool("528.chip_bismoid"));
+        precassPair(consumer, "chip_quantum", "precass.chip_quantum", 300, 20_000L, 90, 75, sourceOrder++,
+                LegacyMetaItemMappings.stack(LegacyMetaItemMappings.CIRCUIT, 16, 1).orElseThrow(),
+                builder -> builder
+                        .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 4, 8)
+                        .inputLegacyOre("wireDenseBSCCO", 2)
+                        .inputLegacyOre("ingotAnyHardPlastic", 4)
+                        .inputItem(item("pellet_charged"), 4)
+                        .inputLegacyOre("wireFineGold", 8)
+                        .inputFluid(HbmFluids.HELIUM4, 250)
+                        .pool("528.chip_quantum"));
+        precassPair(consumer, "atomic_clock", "precass.atomic_clock", 200, 2_000L, 50, 75, sourceOrder++,
+                LegacyMetaItemMappings.stack(LegacyMetaItemMappings.CIRCUIT, 18, 1).orElseThrow(),
+                builder -> builder
+                        .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 5, 8)
+                        .inputLegacyOre("ingotAnyPlastic", 4)
+                        .inputLegacyOre("wireFineZirconium", 8)
+                        .inputLegacyOre("dustStrontium", 1)
+                        .pool("528.strontium"));
+        precassPair(consumer, "controller", "precass.controller", 400, 15_000L, 75, 75, sourceOrder++,
+                LegacyMetaItemMappings.stack(LegacyMetaItemMappings.CIRCUIT, 13, 1).orElseThrow(),
+                builder -> builder
+                        .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 5, 32)
+                        .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 1, 32)
+                        .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 2, 16)
+                        .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 12, 1)
+                        .inputItem(ModItems.UPGRADE_SPEED_1.get(), 1)
+                        .inputLegacyOre("wireFineLead", 16)
+                        .inputFluid(HbmFluids.PERFLUOROMETHYL, 1_000));
+        precassPair(consumer, "controller_advanced", "precass.controller_advanced", 600, 25_000L, 50, 75, sourceOrder++,
+                LegacyMetaItemMappings.stack(LegacyMetaItemMappings.CIRCUIT, 14, 1).orElseThrow(),
+                builder -> builder
+                        .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 6, 16)
+                        .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 2, 48)
+                        .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 18, 1)
+                        .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 12, 1)
+                        .inputItem(ModItems.UPGRADE_SPEED_3.get(), 1)
+                        .inputLegacyOre("wireFineLead", 24)
+                        .inputFluid(HbmFluids.PERFLUOROMETHYL, 4_000));
+        precassPair(consumer, "controller_quantum", "precass.controller_quantum", 600, 250_000L, 75, 75, sourceOrder++,
+                LegacyMetaItemMappings.stack(LegacyMetaItemMappings.CIRCUIT, 17, 1).orElseThrow(),
+                builder -> builder
+                        .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 16, 16)
+                        .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 6, 48)
+                        .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 18, 8)
+                        .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 14, 2)
+                        .inputItem(ModItems.UPGRADE_OVERDRIVE_1.get(), 1)
+                        .inputLegacyOre("wireFineLead", 32)
+                        .inputFluid(HbmFluids.PERFLUOROMETHYL_COLD, 6_000));
+
+        precassUpgradePair(consumer, "upgrade_speed", ModItems.UPGRADE_SPEED_1.get(), ModItems.UPGRADE_SPEED_2.get(),
+                sourceOrder++);
+        precassUpgradePair(consumer, "upgrade_effect", ModItems.UPGRADE_EFFECT_1.get(), ModItems.UPGRADE_EFFECT_2.get(),
+                sourceOrder++);
+        precassUpgradePair(consumer, "upgrade_power", ModItems.UPGRADE_POWER_1.get(), ModItems.UPGRADE_POWER_2.get(),
+                sourceOrder++);
+        precassUpgradePair(consumer, "upgrade_fortune", ModItems.UPGRADE_FORTUNE_1.get(), ModItems.UPGRADE_FORTUNE_2.get(),
+                sourceOrder++);
+        precassUpgradePair(consumer, "upgrade_ab", ModItems.UPGRADE_AFTERBURN_1.get(), ModItems.UPGRADE_AFTERBURN_2.get(),
+                sourceOrder++);
+        precassUpgradePair(consumer, "upgrade_speed", ModItems.UPGRADE_SPEED_2.get(), ModItems.UPGRADE_SPEED_3.get(),
+                sourceOrder++);
+        precassUpgradePair(consumer, "upgrade_effect", ModItems.UPGRADE_EFFECT_2.get(), ModItems.UPGRADE_EFFECT_3.get(),
+                sourceOrder++);
+        precassUpgradePair(consumer, "upgrade_power", ModItems.UPGRADE_POWER_2.get(), ModItems.UPGRADE_POWER_3.get(),
+                sourceOrder++);
+        precassUpgradePair(consumer, "upgrade_fortune", ModItems.UPGRADE_FORTUNE_2.get(), ModItems.UPGRADE_FORTUNE_3.get(),
+                sourceOrder++);
+        precassUpgradePair(consumer, "upgrade_ab", ModItems.UPGRADE_AFTERBURN_2.get(), ModItems.UPGRADE_AFTERBURN_3.get(),
+                sourceOrder++);
+
+        precassPair(consumer, "upgrade_overdive_i", "precass.upgrade_overdive_i", 200, 1_000L, 50, 75,
+                sourceOrder++, new ItemStack(ModItems.UPGRADE_OVERDRIVE_1.get()),
+                builder -> builder
+                        .inputItem(ModItems.UPGRADE_SPEED_3.get(), 1)
+                        .inputItem(ModItems.UPGRADE_EFFECT_3.get(), 1)
+                        .inputLegacyOre("ingotSaturnite", 16)
+                        .inputLegacyOre("ingotAnyHardPlastic", 16)
+                        .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 9, 16));
+        precassPair(consumer, "upgrade_overdive_ii", "precass.upgrade_overdive_ii", 600, 5_000L, 50, 75,
+                sourceOrder++, new ItemStack(ModItems.UPGRADE_OVERDRIVE_2.get()),
+                builder -> builder
+                        .inputItem(ModItems.UPGRADE_OVERDRIVE_1.get(), 1)
+                        .inputItem(ModItems.UPGRADE_SPEED_3.get(), 1)
+                        .inputItem(ModItems.UPGRADE_EFFECT_3.get(), 1)
+                        .inputLegacyOre("ingotSaturnite", 16)
+                        .inputItem(item("ingot_cft"), 8)
+                        .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 10, 16));
+        precassPair(consumer, "upgrade_overdive_iii", "precass.upgrade_overdive_iii", 1_200, 100_000L, 25, 75,
+                sourceOrder++, new ItemStack(ModItems.UPGRADE_OVERDRIVE_3.get()),
+                builder -> builder
+                        .inputItem(ModItems.UPGRADE_OVERDRIVE_2.get(), 1)
+                        .inputItem(ModItems.UPGRADE_SPEED_3.get(), 1)
+                        .inputItem(ModItems.UPGRADE_EFFECT_3.get(), 1)
+                        .inputLegacyOre("ingotAnyBismoidBronze", 16)
+                        .inputItem(item("ingot_cft"), 16)
+                        .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 11, 16));
+    }
+
+    private static void precassUpgradePair(Consumer<FinishedRecipe> consumer, String upgradeName,
+            Item lower, Item higher, int sourceOrder) {
+        int stage = lower == ModItems.UPGRADE_SPEED_1.get() || lower == ModItems.UPGRADE_EFFECT_1.get()
+                || lower == ModItems.UPGRADE_POWER_1.get() || lower == ModItems.UPGRADE_FORTUNE_1.get()
+                || lower == ModItems.UPGRADE_AFTERBURN_1.get() ? 1 : 2;
+        String suffix = stage == 1 ? "ii" : "iii";
+        int duration = stage == 1 ? 300 : 400;
+        long power = stage == 1 ? 10_000L : 25_000L;
+        int chance = stage == 1 ? 50 : 25;
+        precassPair(consumer, upgradeName + "_" + suffix, "precass." + upgradeName + "_" + suffix,
+                duration, power, chance, 75, sourceOrder, new ItemStack(higher),
+                builder -> {
+                    builder.inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 5, stage == 1 ? 8 : 16)
+                            .inputLegacyMeta(LegacyMetaItemMappings.CIRCUIT, 2, stage == 1 ? 4 : 16)
+                            .inputItem(lower, 1)
+                            .inputLegacyOre(stage == 1 ? "ingotAnyPlastic" : "ingotRubber", 4);
+                    if (stage == 2) {
+                        builder.inputFluid(HbmFluids.SOLVENT, 500);
+                    }
+                });
+    }
+
+    private static void precassPair(Consumer<FinishedRecipe> consumer, String recipePath, String internalName,
+            int duration, long power, int successChance, int reclaim, int sourceOrder, ItemStack output,
+            Consumer<GenericMachineRecipeBuilder> inputConfigurer) {
+        GenericMachineRecipeBuilder main = GenericMachineRecipeBuilder.precass(internalName, duration, power);
+        inputConfigurer.accept(main);
+        main.outputOneOf(
+                        GenericMachineRecipeBuilder.WeightedOutput.of(output, successChance),
+                        GenericMachineRecipeBuilder.WeightedOutput.of(BrokenItem.make(output), 100 - successChance))
+                .sourceOrder(sourceOrder)
+                .save(consumer, id("precass/" + recipePath));
+
+        GenericMachineRecipeBuilder recycle = GenericMachineRecipeBuilder.precass(internalName + ".recycle", duration, power)
+                .inputPartialNbt(BrokenItem.make(output))
+                .icon(BrokenItem.make(output))
+                .nameWrapper("precass.recycle");
+        for (HbmIngredient input : main.itemInputEntries) {
+            ItemStack recovered = precisionRecycleStack(input, internalName);
+            recycle.outputChance(recovered, reclaim / 100.0F);
+        }
+        for (GenericMachineRecipeBuilder.InputFluid input : main.inputFluidEntries) {
+            recycle.outputFluid(input.fluid(), (int) Math.round(input.amount() * reclaim / 100.0D), input.pressure());
+        }
+        recycle.save(consumer, id("precass/" + recipePath + "_recycle"));
+    }
+
+    private static ItemStack precisionRecycleStack(HbmIngredient input, String internalName) {
+        return input.displayStacks().stream().findFirst().orElseGet(() -> {
+            String legacyOre = input.legacyOreName();
+            String itemName = switch (legacyOre) {
+                case "wireFineGold" -> "wire_gold";
+                case "nuggetAnyBismoid" -> "nugget_bismuth";
+                case "wireDenseBSCCO" -> "wire_dense_bscco";
+                case "ingotAnyHardPlastic" -> "ingot_pc";
+                case "ingotAnyPlastic" -> "ingot_polymer";
+                case "wireFineZirconium" -> "wire_fine_zirconium";
+                case "dustStrontium" -> "powder_strontium";
+                case "wireFineLead" -> "wire_fine_lead";
+                case "ingotSaturnite" -> "ingot_saturnite";
+                case "ingotAnyBismoidBronze" -> "ingot_bismuth_bronze";
+                case "ingotRubber" -> "ingot_rubber";
+                default -> throw new IllegalStateException("Missing precision assembly recycle display item for "
+                        + internalName + ": " + input.diagnosticName());
+            };
+            return new ItemStack(item(itemName), input.count());
+        });
     }
 
     private static void liquefactionRecipes(Consumer<FinishedRecipe> consumer) {
@@ -13404,7 +14421,670 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 .save(consumer, id("press/flat_briquette_wood"));
     }
 
+    private static void legacyBreedingRodRecipes(Consumer<FinishedRecipe> consumer) {
+        // 1.7.10 RodRecipes: empty single/dual/quad breeder rod containers.
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("rod_empty"), 16)
+                .pattern("SSS")
+                .pattern("L L")
+                .pattern("SSS")
+                .define('S', forgeTag("plates/steel"))
+                .define('L', forgeTag("plates/lead"))
+                .unlockedBy("has_steel_plate", has(forgeTag("plates/steel")))
+                .save(consumer, id("parts/rod_empty"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("rod_empty"), 2)
+                .requires(item("rod_dual_empty"))
+                .unlockedBy("has_dual_empty_rod", has(item("rod_dual_empty")))
+                .save(consumer, id("parts/rod_empty_from_dual"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("rod_dual_empty"))
+                .requires(item("rod_empty"), 2)
+                .unlockedBy("has_empty_rod", has(item("rod_empty")))
+                .save(consumer, id("parts/rod_dual_empty"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("rod_empty"), 4)
+                .requires(item("rod_quad_empty"))
+                .unlockedBy("has_quad_empty_rod", has(item("rod_quad_empty")))
+                .save(consumer, id("parts/rod_empty_from_quad"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("rod_quad_empty"))
+                .requires(item("rod_empty"), 4)
+                .unlockedBy("has_empty_rod", has(item("rod_empty")))
+                .save(consumer, id("parts/rod_quad_empty"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("rod_quad_empty"))
+                .requires(item("rod_dual_empty"), 2)
+                .unlockedBy("has_dual_empty_rod", has(item("rod_dual_empty")))
+                .save(consumer, id("parts/rod_quad_empty_from_dual"));
+
+        // 1.7.10 RodRecipes: lithium fills all three breeder rod families.
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("rod_lithium"))
+                .requires(item("rod_empty"))
+                .requires(forgeTag("ingots/lithium"))
+                .unlockedBy("has_lithium_ingot", has(forgeTag("ingots/lithium")))
+                .save(consumer, id("parts/rod_lithium"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("rod_dual_lithium"))
+                .requires(item("rod_dual_empty"))
+                .requires(forgeTag("ingots/lithium"))
+                .requires(forgeTag("ingots/lithium"))
+                .unlockedBy("has_lithium_ingot", has(forgeTag("ingots/lithium")))
+                .save(consumer, id("parts/rod_dual_lithium"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("rod_quad_lithium"))
+                .requires(item("rod_quad_empty"))
+                .requires(forgeTag("ingots/lithium"))
+                .requires(forgeTag("ingots/lithium"))
+                .requires(forgeTag("ingots/lithium"))
+                .requires(forgeTag("ingots/lithium"))
+                .unlockedBy("has_lithium_ingot", has(forgeTag("ingots/lithium")))
+                .save(consumer, id("parts/rod_quad_lithium"));
+    }
+
+    private static void legacyDetonatorRecipe(Consumer<FinishedRecipe> consumer) {
+        // 1.7.10 CraftingManager: steel plate over a basic circuit.
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("detonator"))
+                .pattern("C")
+                .pattern("S")
+                .define('C', forgeTag("circuits/basic"))
+                .define('S', forgeTag("plates/steel"))
+                .unlockedBy("has_basic_circuit", has(forgeTag("circuits/basic")))
+                .save(consumer, id("weapon/detonator"));
+    }
+
+    /**
+     * Remaining ordinary 1.7.10 CraftingManager/WeaponRecipes entries which
+     * are backed by registered 1.20.1 items or blocks.  These deliberately
+     * stay as datapack crafting recipes; they are not anvil or machine
+     * recipes.  Red-room keys and custom-machine content are intentionally
+     * omitted by the migration rules.
+     */
+    private static void legacyAdditionalWorkbenchRecipes(Consumer<FinishedRecipe> consumer) {
+        // CraftingManager: the hidden commemorative watch recipe.
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.WATCH.get())
+                .pattern("LYL")
+                .pattern("EWE")
+                .pattern("LYL")
+                .define('L', forgeTag("dyes/blue"))
+                .define('Y', item("billet_yharonite"))
+                .define('E', forgeTag("ingots/euphemium"))
+                .define('W', Items.CLOCK)
+                .unlockedBy("has_yharonite_billet", has(item("billet_yharonite")))
+                .save(consumer, id("misc/watch"));
+
+        // CraftingManager: recipe outputs carry TrinketBlockItem's Variant tag.
+        shapedNbtRecipe(consumer, id("blocks/plushie_yomi"), block("plushie"), 1,
+                "{Variant:1}", new String[] {"LCR"},
+                new Object[][] {{'L', Items.CARROT}, {'C', ModItems.RAG.get()},
+                        {'R', forgeTag("circuits/vacuum_tube")}});
+        shapedNbtRecipe(consumer, id("blocks/plushie_numbernine"), block("plushie"), 1,
+                "{Variant:2}", new String[] {" C ", "LCR", " C "},
+                new Object[][] {{'L', ModItems.CIGARETTE.get()}, {'C', ModItems.RAG.get()},
+                        {'R', forgeTag("gems/coal")} });
+
+        // CraftingManager's optional simple-crafting chain: water restores scorched uranium ore.
+        scorchedUraniumOreRecipes(consumer, "ore_uranium", "ore_uranium_scorched");
+        scorchedUraniumOreRecipes(consumer, "ore_nether_uranium", "ore_nether_uranium_scorched");
+        scorchedUraniumOreRecipes(consumer, "ore_gneiss_uranium", "ore_gneiss_uranium_scorched");
+        scorchedUraniumOreRecipes(consumer, "ore_uranium", "ore_sellafield_uranium_scorched");
+
+        // 1.7.10 CraftingManager: ballistic jackets.
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("jackt"))
+                .pattern("S S")
+                .pattern("LIL")
+                .pattern("LIL")
+                .define('S', forgeTag("plates/steel"))
+                .define('L', Items.LEATHER)
+                .define('I', forgeTag("ingots/any_rubber"))
+                .unlockedBy("has_steel_plate", has(forgeTag("plates/steel")))
+                .save(consumer, id("armor/jackt"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("jackt2"))
+                .pattern("S S")
+                .pattern("LIL")
+                .pattern("III")
+                .define('S', forgeTag("plates/steel"))
+                .define('L', Items.LEATHER)
+                .define('I', forgeTag("ingots/any_rubber"))
+                .unlockedBy("has_steel_plate", has(forgeTag("plates/steel")))
+                .save(consumer, id("armor/jackt2"));
+
+        // CraftingManager: ammo/casing bags and the DGK ammunition.
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("casing_bag"))
+                .pattern(" L ").pattern("LGL").pattern(" L ")
+                .define('L', Items.LEATHER).define('G', forgeTag("plates/gun_metal"))
+                .unlockedBy("has_gunmetal_plate", has(forgeTag("plates/gun_metal")))
+                .save(consumer, id("weapon/casing_bag_leather"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("casing_bag"))
+                .pattern(" L ").pattern("LGL").pattern(" L ")
+                .define('L', forgeTag("ingots/any_rubber")).define('G', forgeTag("plates/gun_metal"))
+                .unlockedBy("has_gunmetal_plate", has(forgeTag("plates/gun_metal")))
+                .save(consumer, id("weapon/casing_bag_rubber"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("ammo_bag"))
+                .pattern("LLL").pattern("MGM").pattern("LLL")
+                .define('L', Items.LEATHER).define('G', forgeTag("plates/weapon_steel"))
+                .define('M', forgeTag("gun_mechanisms/weapon_steel"))
+                .unlockedBy("has_weaponsteel_plate", has(forgeTag("plates/weapon_steel")))
+                .save(consumer, id("weapon/ammo_bag_leather"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("ammo_bag"))
+                .pattern("LLL").pattern("MGM").pattern("LLL")
+                .define('L', forgeTag("ingots/any_rubber")).define('G', forgeTag("plates/weapon_steel"))
+                .define('M', forgeTag("gun_mechanisms/weapon_steel"))
+                .unlockedBy("has_weaponsteel_plate", has(forgeTag("plates/weapon_steel")))
+                .save(consumer, id("weapon/ammo_bag_rubber"));
+        for (String propellant : new String[] {"ballistite", "cordite"}) {
+            ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("ammo_dgk"))
+                    .pattern("LLL").pattern("GGG").pattern("CCC")
+                    .define('L', forgeTag("plates/lead")).define('G', item(propellant))
+                    .define('C', forgeTag("ingots/copper"))
+                    .unlockedBy("has_lead_plate", has(forgeTag("plates/lead")))
+                    .save(consumer, id("weapon/ammo_dgk_" + propellant));
+        }
+
+        // CraftingManager: singularity, black-hole and AMS core chain.
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("singularity"))
+                .pattern("ESE").pattern("SBS").pattern("ESE")
+                .define('E', forgeTag("nuggets/euphemium"))
+                .define('S', item("cell_anti_schrabidium"))
+                .define('B', forgeTag("storage_blocks/schrabidium"))
+                .unlockedBy("has_anti_schrabidium_cell", has(item("cell_anti_schrabidium")))
+                .save(consumer, id("parts/singularity"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("singularity_counter_resonant"))
+                .pattern("CTC").pattern("TST").pattern("CTC")
+                .define('C', forgeTag("plates/combine_steel"))
+                .define('T', forgeTag("ingots/magnetized_tungsten"))
+                .define('S', item("singularity"))
+                .unlockedBy("has_singularity", has(item("singularity")))
+                .save(consumer, id("parts/singularity_counter_resonant"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("singularity_super_heated"))
+                .pattern("CTC").pattern("TST").pattern("CTC")
+                .define('C', forgeTag("plates/saturnite"))
+                .define('T', item("powder_power")).define('S', item("singularity"))
+                .unlockedBy("has_singularity", has(item("singularity")))
+                .save(consumer, id("parts/singularity_super_heated"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("black_hole"))
+                .pattern("SSS").pattern("SCS").pattern("SSS")
+                .define('S', item("crystal_xen")).define('C', item("singularity"))
+                .unlockedBy("has_singularity", has(item("singularity")))
+                .save(consumer, id("parts/black_hole"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("crystal_xen"))
+                .pattern("EEE").pattern("EIE").pattern("EEE")
+                .define('E', item("powder_power")).define('I', forgeTag("ingots/euphemium"))
+                .unlockedBy("has_power_powder", has(item("powder_power")))
+                .save(consumer, id("parts/crystal_xen"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("singularity_spark"))
+                .pattern("XAX").pattern("BCB").pattern("XAX")
+                .define('X', item("plate_dineutronium"))
+                .define('A', item("singularity_counter_resonant"))
+                .define('B', item("singularity_super_heated"))
+                .define('C', item("black_hole"))
+                .unlockedBy("has_black_hole", has(item("black_hole")))
+                .save(consumer, id("parts/singularity_spark"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("singularity_spark"))
+                .pattern("XBX").pattern("ACA").pattern("XBX")
+                .define('X', item("plate_dineutronium"))
+                .define('A', item("singularity_counter_resonant"))
+                .define('B', item("singularity_super_heated"))
+                .define('C', item("black_hole"))
+                .unlockedBy("has_black_hole", has(item("black_hole")))
+                .save(consumer, id("parts/singularity_spark_reversed"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("ams_core_sing"))
+                .pattern("EAE").pattern("ASA").pattern("EAE")
+                .define('E', item("plate_euphemium")).define('A', item("cell_anti_schrabidium"))
+                .define('S', item("singularity"))
+                .unlockedBy("has_singularity", has(item("singularity")))
+                .save(consumer, id("ams/ams_core_sing"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("ams_core_wormhole"))
+                .pattern("DPD").pattern("PSP").pattern("DPD")
+                .define('D', item("plate_dineutronium")).define('P', item("powder_spark_mix"))
+                .define('S', item("singularity"))
+                .unlockedBy("has_singularity", has(item("singularity")))
+                .save(consumer, id("ams/ams_core_wormhole"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("ams_core_eyeofharmony"))
+                .pattern("ALA").pattern("LSL").pattern("ALA")
+                .define('A', item("plate_dalekanium"))
+                .define('L', HbmFluidContainerIngredient.of(HbmFluids.LAVA, 1_000))
+                .define('S', item("black_hole"))
+                .unlockedBy("has_black_hole", has(item("black_hole")))
+                .save(consumer, id("ams/ams_core_eyeofharmony"));
+
+        // CraftingManager: ordinary weapon parts and nuclear charges.
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, block("bomb_multi"))
+                .pattern("AAD").pattern("CHF").pattern("AAD")
+                .define('A', forgeTag("wires/aluminium")).define('D', forgeTag("dyes/white"))
+                .define('C', forgeTag("circuits/basic")).define('H', forgeTag("shells/aluminium"))
+                .define('F', item("fins_quad_titanium"))
+                .unlockedBy("has_basic_circuit", has(forgeTag("circuits/basic")))
+                .save(consumer, id("weapon/bomb_multi"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, block("det_charge"))
+                .pattern("PDP").pattern("DTD").pattern("PDP")
+                .define('P', forgeTag("plates/steel")).define('D', block("det_cord"))
+                .define('T', forgeTag("ingots/any_plastic_explosive"))
+                .unlockedBy("has_det_cord", has(block("det_cord")))
+                .save(consumer, id("weapon/det_charge"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("n2_charge"))
+                .pattern(" D ").pattern("ERE").pattern(" D ")
+                .define('D', item("ducttape")).define('E', block("det_charge"))
+                .define('R', Blocks.REDSTONE_BLOCK)
+                .unlockedBy("has_det_charge", has(block("det_charge")))
+                .save(consumer, id("weapon/n2_charge"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("igniter"))
+                .pattern(" W").pattern("SC").pattern("CE")
+                .define('W', forgeTag("wires/schrabidium")).define('S', forgeTag("plates/steel"))
+                .define('C', forgeTag("circuits/advanced")).define('E', forgeTag("ingots/euphemium"))
+                .unlockedBy("has_advanced_circuit", has(forgeTag("circuits/advanced")))
+                .save(consumer, id("weapon/igniter"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("jetpack_tank"))
+                .pattern(" S ").pattern("BKB").pattern(" S ")
+                .define('S', forgeTag("plates/steel")).define('B', forgeTag("bolts/steel"))
+                .define('K', HbmFluidContainerIngredient.of(HbmFluids.KEROSENE, 1_000))
+                .unlockedBy("has_kerosene", has(item("fluid_tank_full")))
+                .save(consumer, id("parts/jetpack_tank"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item("pellet_antimatter"))
+                .pattern("###").pattern("###").pattern("###")
+                .define('#', item("cell_antimatter"))
+                .unlockedBy("has_antimatter_cell", has(item("cell_antimatter")))
+                .save(consumer, id("weapon/pellet_antimatter"));
+        shapedCustomNukeRecipe(consumer, "custom_tnt", new String[] {" C ", "TIT", "TIT"},
+                new Object[][] {{'C', forgeTag("plates/copper")}, {'I', forgeTag("plates/iron")},
+                        {'T', forgeTag("ingots/any_high_explosive")}});
+        shapedCustomNukeRecipe(consumer, "custom_nuke", new String[] {" C ", "LUL", "LUL"},
+                new Object[][] {{'C', forgeTag("plates/copper")}, {'L', forgeTag("plates/lead")},
+                        {'U', forgeTag("ingots/u235")} });
+        shapedCustomNukeRecipe(consumer, "custom_hydro", new String[] {" C ", "LTL", "LIL"},
+                new Object[][] {{'C', forgeTag("plates/copper")}, {'L', forgeTag("plates/lead")},
+                        {'I', forgeTag("plates/iron")}, {'T', item("cell_tritium")} });
+        shapedCustomNukeRecipe(consumer, "custom_amat", new String[] {" C ", "MMM", "AAA"},
+                new Object[][] {{'C', forgeTag("plates/copper")}, {'M', item("cell_antimatter")},
+                        {'A', forgeTag("plates/aluminium")} });
+        shapedCustomNukeRecipe(consumer, "custom_dirty", new String[] {" C ", "WLW", "WLW"},
+                new Object[][] {{'C', forgeTag("plates/copper")}, {'L', forgeTag("plates/lead")},
+                        {'W', item("nuclear_waste")} });
+        shapedCustomNukeRecipe(consumer, "custom_schrab", new String[] {" C ", "LUL", "LUL"},
+                new Object[][] {{'C', forgeTag("plates/copper")}, {'L', forgeTag("plates/lead")},
+                        {'U', forgeTag("ingots/schrabidium")} });
+        shapedCustomNukeRecipe(consumer, "custom_fall", new String[] {"IIP", "CHW", "IIP"},
+                new Object[][] {{'I', forgeTag("ingots/any_rubber")}, {'P', forgeTag("plates/dineutronium")},
+                        {'C', forgeTag("circuits/advanced")}, {'H', forgeTag("shells/steel")},
+                        {'W', item("coil_copper")} });
+
+        // CraftingManager: keyed locks, fluid identifier and simple containers.
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, item("key"))
+                .pattern("  B").pattern(" B ").pattern("P  ")
+                .define('P', forgeTag("plates/steel")).define('B', forgeTag("bolts/steel"))
+                .unlockedBy("has_steel_plate", has(forgeTag("plates/steel")))
+                .save(consumer, id("control/key"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, item("key_kit"))
+                .pattern("PKP").pattern("DTD").pattern("PKP")
+                .define('P', forgeTag("plates/gold")).define('K', item("key"))
+                .define('D', item("powder_desh")).define('T', forgeTag("tools/screwdrivers"))
+                .unlockedBy("has_key", has(item("key")))
+                .save(consumer, id("control/key_kit"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, item("pin"))
+                .pattern("W ").pattern(" W").pattern(" W")
+                .define('W', forgeTag("wires/copper"))
+                .unlockedBy("has_copper_wire", has(forgeTag("wires/copper")))
+                .save(consumer, id("control/pin"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, item("padlock_rusty"))
+                .pattern("I").pattern("B").pattern("I")
+                .define('I', forgeTag("ingots/iron")).define('B', forgeTag("bolts/steel"))
+                .unlockedBy("has_iron_ingot", has(forgeTag("ingots/iron")))
+                .save(consumer, id("control/padlock_rusty"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, item("padlock"))
+                .pattern(" P ").pattern("PBP").pattern("PPP")
+                .define('P', forgeTag("plates/steel")).define('B', forgeTag("bolts/steel"))
+                .unlockedBy("has_steel_plate", has(forgeTag("plates/steel")))
+                .save(consumer, id("control/padlock"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, item("padlock_reinforced"))
+                .pattern(" P ").pattern("PBP").pattern("PDP")
+                .define('P', forgeTag("plates/dura_steel")).define('B', forgeTag("bolts/dura_steel"))
+                .define('D', item("plate_desh"))
+                .unlockedBy("has_dura_plate", has(forgeTag("plates/dura_steel")))
+                .save(consumer, id("control/padlock_reinforced"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, item("padlock_unbreakable"))
+                .pattern(" P ").pattern("PBP").pattern("PDP")
+                .define('P', forgeTag("plates/saturnite")).define('B', forgeTag("bolts/dura_steel"))
+                .define('D', Items.DIAMOND)
+                .unlockedBy("has_saturnite_plate", has(forgeTag("plates/saturnite")))
+                .save(consumer, id("control/padlock_unbreakable"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, item("fluid_identifier_multi"))
+                .pattern("D").pattern("C").pattern("P")
+                .define('D', forgeTag("dyes")).define('C', forgeTag("circuits/vacuum_tube"))
+                .define('P', forgeTag("plates/iron"))
+                .unlockedBy("has_vacuum_tube", has(forgeTag("circuits/vacuum_tube")))
+                .save(consumer, id("control/fluid_identifier_multi"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, block("deco_emitter"))
+                .pattern("IDI").pattern("DRD").pattern("IDI")
+                .define('I', forgeTag("ingots/iron")).define('D', Items.DIAMOND)
+                .define('R', Blocks.REDSTONE_BLOCK)
+                .unlockedBy("has_diamond", has(Items.DIAMOND))
+                .save(consumer, id("blocks/deco_emitter"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, block("lamp_demon"))
+                .pattern(" D ").pattern("S S")
+                .define('D', item("demon_core_closed")).define('S', forgeTag("ingots/steel"))
+                .unlockedBy("has_demon_core", has(item("demon_core_closed")))
+                .save(consumer, id("blocks/lamp_demon"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, block("lantern"))
+                .pattern("PGP").pattern(" S ").pattern(" S ")
+                .define('P', forgeTag("glass_panes")).define('G', Items.GLOWSTONE_DUST)
+                .define('S', block("steel_beam"))
+                .unlockedBy("has_steel_beam", has(block("steel_beam")))
+                .save(consumer, id("blocks/lantern"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, block("spotlight_incandescent"), 8)
+                .pattern("G").pattern("T").pattern("I")
+                .define('G', forgeTag("glass_panes")).define('T', forgeTag("wires/tungsten"))
+                .define('I', forgeTag("ingots/iron"))
+                .unlockedBy("has_tungsten_wire", has(forgeTag("wires/tungsten")))
+                .save(consumer, id("blocks/spotlight_incandescent"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, block("spotlight_fluoro"), 8)
+                .pattern("G").pattern("M").pattern("A")
+                .define('G', forgeTag("glass_panes")).define('M', forgeTag("ingots/mercury"))
+                .define('A', forgeTag("plates/aluminium"))
+                .unlockedBy("has_mercury", has(forgeTag("ingots/mercury")))
+                .save(consumer, id("blocks/spotlight_fluoro"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.DECORATIONS, block("spotlight_halogen"), 8)
+                .pattern("G").pattern("B").pattern("S")
+                .define('G', forgeTag("glass_panes")).define('B', forgeTag("dusts/bromine"))
+                .define('S', forgeTag("plates/steel"))
+                .unlockedBy("has_bromine", has(forgeTag("dusts/bromine")))
+                .save(consumer, id("blocks/spotlight_halogen"));
+
+        // CraftingManager: cargo elevator, depth masonry and reinforced building blocks.
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("cargo_elevator"), 3)
+                .pattern("GGG").pattern("SPS")
+                .define('G', block("steel_grate"))
+                .define('S', forgeTag("ingots/steel"))
+                .define('P', item("part_generic_piston_hydraulic"))
+                .unlockedBy("has_hydraulic_piston", has(item("part_generic_piston_hydraulic")))
+                .save(consumer, id("blocks/cargo_elevator"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("depth_brick"), 4)
+                .pattern("CC").pattern("CC")
+                .define('C', block("stone_depth"))
+                .unlockedBy("has_depth_stone", has(block("stone_depth")))
+                .save(consumer, id("blocks/depth_brick"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("depth_tiles"), 4)
+                .pattern("CC").pattern("CC")
+                .define('C', block("depth_brick"))
+                .unlockedBy("has_depth_brick", has(block("depth_brick")))
+                .save(consumer, id("blocks/depth_tiles"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("depth_nether_brick"), 4)
+                .pattern("CC").pattern("CC")
+                .define('C', block("stone_depth_nether"))
+                .unlockedBy("has_nether_depth_stone", has(block("stone_depth_nether")))
+                .save(consumer, id("blocks/depth_nether_brick"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("depth_nether_tiles"), 4)
+                .pattern("CC").pattern("CC")
+                .define('C', block("depth_nether_brick"))
+                .unlockedBy("has_nether_depth_brick", has(block("depth_nether_brick")))
+                .save(consumer, id("blocks/depth_nether_tiles"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("reinforced_light"))
+                .pattern("FFF").pattern("FBF").pattern("FFF")
+                .define('F', Blocks.IRON_BARS).define('B', Blocks.GLOWSTONE)
+                .unlockedBy("has_iron_bars", has(Blocks.IRON_BARS))
+                .save(consumer, id("blocks/reinforced_light"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("reinforced_sand"), 4)
+                .pattern("FBF").pattern("BFB").pattern("FBF")
+                .define('F', Blocks.IRON_BARS).define('B', Blocks.SANDSTONE)
+                .unlockedBy("has_sandstone", has(Blocks.SANDSTONE))
+                .save(consumer, id("blocks/reinforced_sand"));
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.BUILDING_BLOCKS, block("sandbags"), 4)
+                .requires(item("plate_polymer"))
+                .requires(Ingredient.of(forgeTag("sand")), 3)
+                .unlockedBy("has_polymer_plate", has(item("plate_polymer")))
+                .save(consumer, id("blocks/sandbags"));
+
+        // CraftingManager: Presto fuel variants and machine template folder.
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("solid_fuel_presto"))
+                .pattern(" P ").pattern("SRS").pattern(" P ")
+                .define('P', Items.PAPER).define('S', item("solid_fuel")).define('R', Items.REDSTONE)
+                .unlockedBy("has_solid_fuel", has(item("solid_fuel")))
+                .save(consumer, id("parts/solid_fuel_presto"));
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("solid_fuel_presto_triplet"))
+                .requires(item("solid_fuel_presto"), 3).requires(item("ball_dynamite"))
+                .unlockedBy("has_presto_fuel", has(item("solid_fuel_presto")))
+                .save(consumer, id("parts/solid_fuel_presto_triplet"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("solid_fuel_presto_bf"))
+                .pattern(" P ").pattern("SRS").pattern(" P ")
+                .define('P', Items.PAPER).define('S', item("solid_fuel_bf")).define('R', Items.REDSTONE)
+                .unlockedBy("has_balefire_solid_fuel", has(item("solid_fuel_bf")))
+                .save(consumer, id("parts/solid_fuel_presto_bf"));
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, item("solid_fuel_presto_triplet_bf"))
+                .requires(item("solid_fuel_presto_bf"), 3).requires(item("ingot_c4"))
+                .unlockedBy("has_balefire_presto_fuel", has(item("solid_fuel_presto_bf")))
+                .save(consumer, id("parts/solid_fuel_presto_triplet_bf"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("template_folder"))
+                .pattern("LPL").pattern("BPB").pattern("LPL")
+                .define('L', forgeTag("dyes")).define('B', forgeTag("dyes")).define('P', Items.PAPER)
+                .unlockedBy("has_paper", has(Items.PAPER))
+                .save(consumer, id("parts/template_folder"));
+
+        // CraftingManager: asbestos laboratory tiles.
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("tile_lab"), 4)
+                .pattern("CBC").pattern("CBC").pattern("CBC")
+                .define('C', Items.BRICK).define('B', forgeTag("ingots/asbestos"))
+                .unlockedBy("has_asbestos_ingot", has(forgeTag("ingots/asbestos")))
+                .save(consumer, id("blocks/tile_lab"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("tile_lab_cracked"), 6)
+                .pattern(" C ").pattern("C C").pattern(" C ")
+                .define('C', block("tile_lab"))
+                .unlockedBy("has_lab_tile", has(block("tile_lab")))
+                .save(consumer, id("blocks/tile_lab_cracked"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, block("tile_lab_broken"), 6)
+                .pattern(" C ").pattern("C C").pattern(" C ")
+                .define('C', block("tile_lab_cracked"))
+                .unlockedBy("has_cracked_lab_tile", has(block("tile_lab_cracked")))
+                .save(consumer, id("blocks/tile_lab_broken"));
+
+        // CraftingManager: laser crystals.  The Digamma variant is deferred with
+        // the existing electronium-acquisition freeze; these five inputs remain
+        // source-backed and use the modern fluid-container ingredient where needed.
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("laser_crystal_co2"))
+                .pattern("QDQ").pattern("NCN").pattern("QDQ")
+                .define('Q', block("glass_quartz")).define('D', forgeTag("ingots/desh"))
+                .define('N', forgeTag("ingots/niobium"))
+                .define('C', HbmFluidContainerIngredient.of(HbmFluids.CARBONDIOXIDE, 1_000))
+                .unlockedBy("has_desh_ingot", has(forgeTag("ingots/desh")))
+                .save(consumer, id("parts/laser_crystal_co2"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("laser_crystal_bismuth"))
+                .pattern("QUQ").pattern("BCB").pattern("QTQ")
+                .define('Q', block("glass_quartz")).define('U', forgeTag("ingots/uranium"))
+                .define('T', forgeTag("ingots/th232")).define('B', item("nugget_bismuth"))
+                .define('C', item("crystal_rare"))
+                .unlockedBy("has_rare_crystals", has(item("crystal_rare")))
+                .save(consumer, id("parts/laser_crystal_bismuth"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("laser_crystal_cmb"))
+                .pattern("QBQ").pattern("CSC").pattern("QBQ")
+                .define('Q', block("glass_quartz")).define('B', forgeTag("ingots/combine_steel"))
+                .define('C', forgeTag("ingots/schrabidate"))
+                .define('S', item("cell_anti_schrabidium"))
+                .unlockedBy("has_anti_schrabidium_cell", has(item("cell_anti_schrabidium")))
+                .save(consumer, id("parts/laser_crystal_cmb"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("laser_crystal_dnt"))
+                .pattern("QDQ").pattern("SBS").pattern("QDQ")
+                .define('Q', block("glass_quartz")).define('D', forgeTag("ingots/dineutronium"))
+                .define('S', item("powder_spark_mix")).define('B', item("egg_balefire"))
+                .unlockedBy("has_spark_blend", has(item("powder_spark_mix")))
+                .save(consumer, id("parts/laser_crystal_dnt"));
+
+        // CraftingManager: upgrade template and fixed machine upgrades.
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("upgrade_template"))
+                .pattern("WIW").pattern("PCP").pattern("WIW")
+                .define('W', forgeTag("wires/copper")).define('I', forgeTag("plates/iron"))
+                .define('C', forgeTag("circuits/analog")).define('P', item("plate_polymer"))
+                .unlockedBy("has_analog_circuit", has(forgeTag("circuits/analog")))
+                .save(consumer, id("parts/upgrade_template_analog"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("upgrade_template"))
+                .pattern("WIW").pattern("PCP").pattern("WIW")
+                .define('W', forgeTag("wires/copper")).define('I', forgeTag("ingots/any_plastic"))
+                .define('C', forgeTag("circuits/basic")).define('P', item("plate_polymer"))
+                .unlockedBy("has_basic_circuit", has(forgeTag("circuits/basic")))
+                .save(consumer, id("parts/upgrade_template_basic"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("upgrade_nullifier"))
+                .pattern("SPS").pattern("PUP").pattern("SPS")
+                .define('S', forgeTag("plates/steel")).define('P', item("powder_fire"))
+                .define('U', item("upgrade_template"))
+                .unlockedBy("has_upgrade_template_shaped", has(item("upgrade_template")))
+                .save(consumer, id("parts/upgrade_nullifier_shaped"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("upgrade_smelter"))
+                .pattern("PHP").pattern("CUC").pattern("DTD")
+                .define('P', forgeTag("plates/copper")).define('H', Blocks.HOPPER)
+                .define('C', item("coil_tungsten")).define('U', item("upgrade_template"))
+                .define('D', item("coil_copper")).define('T', block("machine_transformer"))
+                .unlockedBy("has_upgrade_template_smelter", has(item("upgrade_template")))
+                .save(consumer, id("parts/upgrade_smelter"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("upgrade_shredder"))
+                .pattern("PHP").pattern("CUC").pattern("DTD")
+                .define('P', item("motor")).define('H', Blocks.HOPPER)
+                .define('C', item("blades_titanium")).define('U', item("upgrade_smelter"))
+                .define('D', forgeTag("plates/titanium")).define('T', block("machine_transformer"))
+                .unlockedBy("has_smelter_upgrade", has(item("upgrade_smelter")))
+                .save(consumer, id("parts/upgrade_shredder"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("upgrade_centrifuge"))
+                .pattern("PHP").pattern("PUP").pattern("DTD")
+                .define('P', item("centrifuge_element")).define('H', Blocks.HOPPER)
+                .define('U', item("upgrade_shredder")).define('D', forgeTag("ingots/any_plastic"))
+                .define('T', block("machine_transformer"))
+                .unlockedBy("has_shredder_upgrade", has(item("upgrade_shredder")))
+                .save(consumer, id("parts/upgrade_centrifuge"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("upgrade_crystallizer"))
+                .pattern("PHP").pattern("CUC").pattern("DTD")
+                .define('P', HbmFluidContainerIngredient.of(HbmFluids.PEROXIDE, 1_000))
+                .define('H', forgeTag("circuits/advanced")).define('C', block("barrel_steel"))
+                .define('U', item("upgrade_centrifuge")).define('D', item("motor"))
+                .define('T', block("machine_transformer"))
+                .unlockedBy("has_centrifuge_upgrade", has(item("upgrade_centrifuge")))
+                .save(consumer, id("parts/upgrade_crystallizer"));
+
+        // CraftingManager: chlorine vents.
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, block("vent_chlorine"))
+                .pattern("IGI").pattern("ICI").pattern("IDI")
+                .define('I', forgeTag("plates/iron")).define('G', Blocks.IRON_BARS)
+                .define('C', item("pellet_gas")).define('D', Blocks.DISPENSER)
+                .unlockedBy("has_gas_pellet", has(item("pellet_gas")))
+                .save(consumer, id("blocks/vent_chlorine"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, block("vent_chlorine_seal"))
+                .pattern("ISI").pattern("SCS").pattern("ISI")
+                .define('I', forgeTag("ingots/saturnite")).define('S', forgeTag("ingots/starmetal"))
+                .define('C', item("chlorine_pinwheel"))
+                .unlockedBy("has_chlorine_pinwheel", has(item("chlorine_pinwheel")))
+                .save(consumer, id("blocks/vent_chlorine_seal"));
+    }
+
+    private static void shapedCustomNukeRecipe(Consumer<FinishedRecipe> consumer, String result,
+                                                 String[] pattern, Object[][] keys) {
+        ShapedRecipeBuilder builder = ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, item(result));
+        for (String row : pattern) builder.pattern(row);
+        for (Object[] key : keys) defineLegacyWorkbenchKey(builder, (Character) key[0], key[1]);
+        builder.unlockedBy("has_copper_plate", has(forgeTag("plates/copper")))
+                .save(consumer, id("weapon/" + result));
+    }
+
+    private static void legacyBoltRecipe(Consumer<FinishedRecipe> consumer, String material, String tag) {
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, item("bolt_" + material), 16)
+                .pattern("#")
+                .pattern("#")
+                .define('#', forgeTag(tag))
+                .unlockedBy("has_" + material + "_ingot", has(forgeTag(tag)))
+                .save(consumer, id("parts/bolt_" + material));
+    }
+
+    private static void shapedNbtRecipe(Consumer<FinishedRecipe> consumer, ResourceLocation recipeId,
+                                        ItemLike result, int count, String resultNbt,
+                                        String[] pattern, Object[][] keys) {
+        consumer.accept(new FinishedRecipe() {
+            @Override
+            public void serializeRecipeData(JsonObject json) {
+                json.addProperty("category", "misc");
+                JsonArray patternArray = new JsonArray();
+                for (String line : pattern) {
+                    patternArray.add(line);
+                }
+                json.add("pattern", patternArray);
+
+                JsonObject keyObject = new JsonObject();
+                for (Object[] entry : keys) {
+                    keyObject.add(String.valueOf((Character) entry[0]), shapedIngredient(entry[1]));
+                }
+                json.add("key", keyObject);
+
+                JsonObject resultObject = new JsonObject();
+                resultObject.addProperty("item", HbmRegistryUtil.itemKey(result.asItem()).toString());
+                if (count != 1) {
+                    resultObject.addProperty("count", count);
+                }
+                resultObject.addProperty("nbt", resultNbt);
+                json.add("result", resultObject);
+                json.addProperty("show_notification", true);
+            }
+
+            @Override
+            public ResourceLocation getId() {
+                return recipeId;
+            }
+
+            @Override
+            public RecipeSerializer<?> getType() {
+                return ModRecipes.LEGACY_NBT_SHAPED.get();
+            }
+
+            @Nullable
+            @Override
+            public JsonObject serializeAdvancement() {
+                return null;
+            }
+
+            @Nullable
+            @Override
+            public ResourceLocation getAdvancementId() {
+                return null;
+            }
+        });
+    }
+
+    private static void scorchedUraniumOreRecipes(Consumer<FinishedRecipe> consumer,
+                                                   String outputName, String inputName) {
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, block(outputName))
+                .requires(block(inputName))
+                .requires(Items.WATER_BUCKET)
+                .unlockedBy("has_" + inputName, has(block(inputName)))
+                .save(consumer, id("blocks/" + outputName + "_from_" + inputName + "_water"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, block(outputName), 8)
+                .pattern("OOO")
+                .pattern("OBO")
+                .pattern("OOO")
+                .define('O', block(inputName))
+                .define('B', Items.WATER_BUCKET)
+                .unlockedBy("has_" + inputName, has(block(inputName)))
+                .save(consumer, id("blocks/" + outputName + "_from_" + inputName + "_water_batch"));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void defineLegacyWorkbenchKey(ShapedRecipeBuilder builder, char key, Object value) {
+        if (value instanceof TagKey<?> tag) {
+            builder.define(key, (TagKey<Item>) tag);
+        } else if (value instanceof ItemLike itemLike) {
+            builder.define(key, itemLike);
+        } else {
+            throw new IllegalArgumentException("Unsupported legacy workbench ingredient: " + value);
+        }
+    }
+
     private static void legacyMissingMachineAcquisitionRecipes(Consumer<FinishedRecipe> consumer) {
+        // The 1.7.10 and reference 1.20.1 trees have no crafting entry for this
+        // registered machine. This is the explicit 1.20.1 acquisition path
+        // requested for the otherwise unobtainable breeding reactor.
+        ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.MACHINE_REACTOR_BREEDING.get())
+                .pattern("SCS")
+                .pattern("LWL")
+                .pattern("SCS")
+                .define('S', forgeTag("plates/steel"))
+                .define('C', forgeTag("circuits/advanced"))
+                .define('L', forgeTag("plates/lead"))
+                .define('W', item("coil_copper"))
+                .unlockedBy("has_advanced_circuit", has(forgeTag("circuits/advanced")))
+                .save(consumer, id("machines/reactor_breeding"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, ModBlocks.DECON.get())
                 .pattern("BGB")
                 .pattern("SAS")
@@ -15679,6 +17359,70 @@ public final class HbmRecipeProvider extends RecipeProvider {
     }
 
     private static void legacyBombPartRecipes(Consumer<FinishedRecipe> consumer) {
+        // 1.7.10 CraftingManager: explosive charge blocks.
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModBlocks.DYNAMITE.get())
+                .pattern("DDD")
+                .pattern("DSD")
+                .pattern("DDD")
+                .define('D', item("stick_dynamite"))
+                .define('S', item("safety_fuse"))
+                .unlockedBy("has_stick_dynamite", has(item("stick_dynamite")))
+                .save(consumer, id("weapon/dynamite"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModBlocks.TNT_NTM.get())
+                .pattern("DDD")
+                .pattern("DSD")
+                .pattern("DDD")
+                .define('D', item("stick_tnt"))
+                .define('S', item("safety_fuse"))
+                .unlockedBy("has_stick_tnt", has(item("stick_tnt")))
+                .save(consumer, id("weapon/tnt"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModBlocks.SEMTEX.get())
+                .pattern("DDD")
+                .pattern("DSD")
+                .pattern("DDD")
+                .define('D', item("stick_semtex"))
+                .define('S', item("safety_fuse"))
+                .unlockedBy("has_stick_semtex", has(item("stick_semtex")))
+                .save(consumer, id("weapon/semtex"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModBlocks.C4.get())
+                .pattern("DDD")
+                .pattern("DSD")
+                .pattern("DDD")
+                .define('D', item("stick_c4"))
+                .define('S', item("safety_fuse"))
+                .unlockedBy("has_stick_c4", has(item("stick_c4")))
+                .save(consumer, id("weapon/c4"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, ModBlocks.CHARGE_DYNAMITE.get())
+                .requires(item("stick_dynamite"), 3)
+                .requires(item("ducttape"))
+                .unlockedBy("has_stick_dynamite", has(item("stick_dynamite")))
+                .save(consumer, id("weapon/charge_dynamite"));
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModBlocks.CHARGE_MINER.get())
+                .pattern(" F ")
+                .pattern("FCF")
+                .pattern(" F ")
+                .define('F', Items.FLINT)
+                .define('C', ModBlocks.CHARGE_DYNAMITE.get())
+                .unlockedBy("has_dynamite_charge", has(ModBlocks.CHARGE_DYNAMITE.get()))
+                .save(consumer, id("weapon/charge_miner"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, ModBlocks.CHARGE_SEMTEX.get())
+                .requires(item("stick_semtex"), 3)
+                .requires(item("ducttape"))
+                .unlockedBy("has_stick_semtex", has(item("stick_semtex")))
+                .save(consumer, id("weapon/charge_semtex"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.COMBAT, ModBlocks.CHARGE_C4.get())
+                .requires(item("stick_c4"), 3)
+                .requires(item("ducttape"))
+                .unlockedBy("has_stick_c4", has(item("stick_c4")))
+                .save(consumer, id("weapon/charge_c4"));
+
         ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, block("emp_bomb"))
                 .pattern("LML")
                 .pattern("LCL")
@@ -16285,6 +18029,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
         private final int duration;
         private final long power;
         private final List<HbmIngredient> itemInputEntries = new ArrayList<>();
+        private final List<InputFluid> inputFluidEntries = new ArrayList<>();
         private final JsonArray inputItems = new JsonArray();
         private final JsonArray inputFluids = new JsonArray();
         private final JsonArray outputItems = new JsonArray();
@@ -16400,6 +18145,7 @@ public final class HbmRecipeProvider extends RecipeProvider {
         }
 
         private GenericMachineRecipeBuilder inputFluid(FluidType fluid, int amount, int pressure) {
+            inputFluidEntries.add(new InputFluid(fluid, amount, pressure));
             inputFluids.add(fluidStack(fluid, amount, pressure));
             return this;
         }
@@ -16447,7 +18193,15 @@ public final class HbmRecipeProvider extends RecipeProvider {
         }
 
         private GenericMachineRecipeBuilder outputLegacyMeta(ResourceLocation legacyId, int legacyMeta) {
-            return outputItem(LegacyMetaItemMappings.requireItem(legacyId, legacyMeta).get());
+            return outputItem(LegacyMetaItemMappings.stack(legacyId, legacyMeta, 1)
+                    .orElseThrow(() -> new IllegalStateException("Missing legacy output mapping: "
+                            + legacyId + " meta " + legacyMeta)));
+        }
+
+        private GenericMachineRecipeBuilder outputLegacyMeta(ResourceLocation legacyId, int legacyMeta, int count) {
+            return outputItem(LegacyMetaItemMappings.stack(legacyId, legacyMeta, count)
+                    .orElseThrow(() -> new IllegalStateException("Missing legacy output mapping: "
+                            + legacyId + " meta " + legacyMeta)));
         }
 
         private GenericMachineRecipeBuilder outputLegacyMetaChance(ResourceLocation legacyId, int legacyMeta, float chance) {
@@ -16637,6 +18391,9 @@ public final class HbmRecipeProvider extends RecipeProvider {
             if (stack.getCount() > 1) {
                 object.addProperty("count", stack.getCount());
             }
+            if (stack.getDamageValue() != 0) {
+                object.addProperty("damage", stack.getDamageValue());
+            }
             if (stack.hasTag() && !stack.getTag().isEmpty()) {
                 object.addProperty("nbt", stack.getTag().toString());
             }
@@ -16666,6 +18423,9 @@ public final class HbmRecipeProvider extends RecipeProvider {
                 }
                 return object;
             }
+        }
+
+        private record InputFluid(FluidType fluid, int amount, int pressure) {
         }
     }
 

@@ -5,11 +5,14 @@ import com.hbm.ntm.api.redstoneoverradio.RTTYDeviceState;
 import com.hbm.ntm.api.redstoneoverradio.RTTYSystem;
 import com.hbm.ntm.entity.logic.NukeExplosionMk3Entity;
 import com.hbm.ntm.util.BufferUtil;
+import com.hbm.ntm.world.BlockMigrationHelper;
 import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.event.RegisterGameTestsEvent;
@@ -114,6 +117,54 @@ public final class RuntimeLifecycleGameTests {
                     }
                 })
                 .thenSucceed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "runtimeLifecycle")
+    public static void chunkMigrationMarkerPreservesNativeSectionLists(GameTestHelper helper) {
+        CompoundTag paletteEntry = new CompoundTag();
+        paletteEntry.putString("Name", "minecraft:stone");
+        ListTag palette = new ListTag();
+        palette.add(paletteEntry);
+
+        CompoundTag blockStates = new CompoundTag();
+        blockStates.put("palette", palette);
+        CompoundTag section = new CompoundTag();
+        section.putByte("Y", (byte) 4);
+        section.put("block_states", blockStates);
+        ListTag sections = new ListTag();
+        sections.add(section);
+        CompoundTag chunkData = new CompoundTag();
+        chunkData.put("sections", sections);
+        chunkData.putString(BlockMigrationHelper.NBT_KEY_BUILD_NUMBER, "wrong-type-marker");
+
+        BlockMigrationHelper.MigrationMarker marker = BlockMigrationHelper.inspectTag(chunkData);
+        if (!marker.hasLegacyMarker() || marker.previousBuild() != 0) {
+            throw new AssertionError("wrong-type migration marker did not preserve legacy numeric-read semantics");
+        }
+        assertNativeChunkNbtUnchanged(chunkData, sections, section, blockStates, palette,
+                "reading the migration marker");
+        BlockMigrationHelper.save(chunkData);
+        assertNativeChunkNbtUnchanged(chunkData, sections, section, blockStates, palette,
+                "writing the migration marker");
+        assertEquals(BlockMigrationHelper.buildNumber(),
+                chunkData.getInt(BlockMigrationHelper.NBT_KEY_BUILD_NUMBER),
+                "chunk migration build marker");
+        helper.succeed();
+    }
+
+    private static void assertNativeChunkNbtUnchanged(CompoundTag chunkData, ListTag sections,
+                                                       CompoundTag section, CompoundTag blockStates,
+                                                       ListTag palette, String operation) {
+        if (chunkData.get("sections") != sections || sections.get(0) != section
+                || section.get("block_states") != blockStates || blockStates.get("palette") != palette) {
+            throw new AssertionError(operation + " replaced native chunk NBT objects");
+        }
+        if (sections.getClass() != ListTag.class || palette.getClass() != ListTag.class) {
+            throw new AssertionError(operation + " replaced native ListTag implementations");
+        }
+        if (chunkData.getList("sections", Tag.TAG_COMPOUND).getCompound(0).getByte("Y") != 4) {
+            throw new AssertionError(operation + " changed typed section reads");
+        }
     }
 
     private static void assertEquals(Object expected, Object actual, String message) {

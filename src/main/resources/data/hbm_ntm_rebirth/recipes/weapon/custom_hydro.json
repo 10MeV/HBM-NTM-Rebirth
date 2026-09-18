@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "tag": "forge:plates/copper"
+    },
+    "I": {
+      "tag": "forge:plates/iron"
+    },
+    "L": {
+      "tag": "forge:plates/lead"
+    },
+    "T": {
+      "item": "hbm_ntm_rebirth:cell_tritium"
+    }
+  },
+  "pattern": [
+    " C ",
+    "LTL",
+    "LIL"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:custom_hydro"
+  },
+  "show_notification": true
+}

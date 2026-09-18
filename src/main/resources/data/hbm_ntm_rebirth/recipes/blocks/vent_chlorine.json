@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "I": { "tag": "forge:plates/iron" },
+    "G": { "item": "minecraft:iron_bars" },
+    "C": { "item": "hbm_ntm_rebirth:pellet_gas" },
+    "D": { "item": "minecraft:dispenser" }
+  },
+  "pattern": ["IGI", "ICI", "IDI"],
+  "result": { "item": "hbm_ntm_rebirth:vent_chlorine" },
+  "show_notification": true
+}

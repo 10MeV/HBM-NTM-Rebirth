@@ -725,7 +725,6 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         ResourceLayerNoise noise = resourceLayerNoise(level.getSeed(), entry.id());
         double[][] cacheX = new double[16][65];
         double[][] cacheZ = new double[16][65];
-        boolean[][] passes = new boolean[16][65];
         for (int o = 0; o < 16; o++) {
             for (int oldY = 64; oldY > 5; oldY--) {
                 cacheX[o][oldY] = noise.x().getValue(oldY * entry.scaleV(),
@@ -745,26 +744,17 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
                 for (int oldY = 64; oldY > 5; oldY--) {
                     double nx = cacheX[oz][oldY];
                     double nz = cacheX[ox][oldY];
-                    passes[oz][oldY] = nx * ny * nz > entry.threshold();
-                }
-                for (int oldY = 64; oldY > 5; oldY--) {
-                    if (!passes[oz][oldY]) {
+                    if (nx * ny * nz <= entry.threshold()) {
                         continue;
                     }
-                    int minY = mapLegacyOreY(level, oldY);
-                    int maxY = minY;
-                    if (oldY < 64 && passes[oz][oldY + 1]) {
-                        maxY = Math.max(maxY, mapLegacyOreY(level, oldY + 1) - 1);
+                    int y = mapLegacyResourceLayerY(level, oldY);
+                    cursor.set(x, y, z);
+                    if (level.isOutsideBuildHeight(cursor)) {
+                        continue;
                     }
-                    for (int y = minY; y <= maxY; y++) {
-                        cursor.set(x, y, z);
-                        if (level.isOutsideBuildHeight(cursor)) {
-                            continue;
-                        }
-                        BlockState target = level.getBlockState(cursor);
-                        if (isResourceLayerReplaceable(level, cursor, target)) {
-                            placedAny |= level.setBlock(cursor, resourceState, Block.UPDATE_CLIENTS);
-                        }
+                    BlockState target = level.getBlockState(cursor);
+                    if (isResourceLayerReplaceable(level, cursor, target)) {
+                        placedAny |= level.setBlock(cursor, resourceState, Block.UPDATE_CLIENTS);
                     }
                 }
             }
@@ -1330,6 +1320,12 @@ public class LegacyOreSetFeature extends Feature<LegacyOreSetFeature.Configurati
         int height = Math.max(1, level.getMaxBuildHeight() - minY);
         int offset = Mth.floor(Mth.clamp(oldY, 0, 127) / 127.0D * (height - 1));
         return Mth.clamp(minY + offset, minY, level.getMaxBuildHeight() - 1);
+    }
+
+    private static int mapLegacyResourceLayerY(WorldGenLevel level, int oldY) {
+        // OreLayer3D sampled exactly one block for every old y=6..64. Preserve that
+        // 59-block bottom-relative band instead of stretching it over the taller modern world.
+        return level.getMinBuildHeight() + oldY;
     }
 
     private static int randomLimestoneY(WorldGenLevel level, RandomSource random) {

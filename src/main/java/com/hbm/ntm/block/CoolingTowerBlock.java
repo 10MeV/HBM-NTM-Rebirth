@@ -29,7 +29,7 @@ public class CoolingTowerBlock extends LegacyVisibleMultiblockMachineBlock {
     }
 
     public boolean usesChunkBakedStaticModel() {
-        return true;
+        return kind == Kind.LARGE;
     }
 
     @Nullable

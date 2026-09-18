@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["PCP", "DMD", "PCP"],
+  "key": {
+    "P": { "tag": "forge:ingots/any_plastic" },
+    "C": { "tag": "forge:dense_wires/gold" },
+    "D": { "tag": "forge:ingots/desh" },
+    "M": { "item": "hbm_ntm_rebirth:motor" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:motor_desh" }
+}

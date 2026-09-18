@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {
+      "tag": "forge:plates/combine_steel"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:singularity"
+    },
+    "T": {
+      "tag": "forge:ingots/magnetized_tungsten"
+    }
+  },
+  "pattern": [
+    "CTC",
+    "TST",
+    "CTC"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:singularity_counter_resonant"
+  },
+  "show_notification": true
+}

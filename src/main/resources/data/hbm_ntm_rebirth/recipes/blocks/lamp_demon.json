@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "D": {
+      "item": "hbm_ntm_rebirth:demon_core_closed"
+    },
+    "S": {
+      "tag": "forge:ingots/steel"
+    }
+  },
+  "pattern": [
+    " D ",
+    "S S"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:lamp_demon"
+  },
+  "show_notification": true
+}

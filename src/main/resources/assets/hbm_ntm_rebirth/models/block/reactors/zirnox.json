@@ -7,6 +7,11 @@
   "flip_v": true,
   "automatic_culling": false,
   "render_type": "hbm_ntm_rebirth:legacy_lit_cutout",
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
   "textures": {
     "particle": "hbm_ntm_rebirth:block/reactors/zirnox",
     "default": "hbm_ntm_rebirth:models/zirnox"

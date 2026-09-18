@@ -1,0 +1,13 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:stamp_obsidian_flat"
+    }
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:stamp_obsidian_plate"
+  },
+  "tier_lower": 2,
+  "overlay": "smithing"
+}

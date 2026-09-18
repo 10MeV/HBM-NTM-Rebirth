@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "tag": "forge:ingots/copper"
+    },
+    "G": {
+      "item": "hbm_ntm_rebirth:ballistite"
+    },
+    "L": {
+      "tag": "forge:plates/lead"
+    }
+  },
+  "pattern": [
+    "LLL",
+    "GGG",
+    "CCC"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:ammo_dgk"
+  },
+  "show_notification": true
+}

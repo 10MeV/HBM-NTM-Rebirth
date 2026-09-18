@@ -1,0 +1,67 @@
+{
+  "type": "hbm_ntm_rebirth:precass",
+  "duration": 600,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:upgrade_overdrive_1"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:upgrade_speed_3"
+      }
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:upgrade_effect_3"
+      }
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:ingots/saturnite"
+      },
+      "legacy_ore": "ingotSaturnite"
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:ingot_cft"
+      }
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_capacitor_board"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 10
+    }
+  ],
+  "internal_name": "precass.upgrade_overdive_ii",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "type": "one_of",
+      "entries": [
+        {
+          "item": "hbm_ntm_rebirth:upgrade_overdrive_2",
+          "weight": 50
+        },
+        {
+          "item": "hbm_ntm_rebirth:broken_item",
+          "nbt": "{itemID:\"hbm_ntm_rebirth:upgrade_overdrive_2\",itemMeta:0}",
+          "weight": 50
+        }
+      ]
+    }
+  ],
+  "pools": [],
+  "power": 5000,
+  "source_order": 20
+}

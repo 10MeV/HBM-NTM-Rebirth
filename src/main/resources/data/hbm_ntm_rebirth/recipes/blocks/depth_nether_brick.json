@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building_blocks",
+  "key": { "C": { "item": "hbm_ntm_rebirth:stone_depth_nether" } },
+  "pattern": ["CC", "CC"],
+  "result": { "item": "hbm_ntm_rebirth:depth_nether_brick", "count": 4 },
+  "show_notification": true
+}

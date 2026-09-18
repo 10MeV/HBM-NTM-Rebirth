@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:plates/saturnite" }, "count": 4, "legacy_ore": "plateSaturnite" },
+  "output": { "item": "hbm_ntm_rebirth:shell_saturnite" },
+  "tier_lower": 1
+}

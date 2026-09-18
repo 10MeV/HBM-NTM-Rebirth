@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:rod_quad_empty" },
+    { "tag": "forge:ingots/lithium" },
+    { "tag": "forge:ingots/lithium" },
+    { "tag": "forge:ingots/lithium" },
+    { "tag": "forge:ingots/lithium" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:rod_quad_lithium" }
+}

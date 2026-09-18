@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    { "item": "minecraft:sand" },
+    { "item": "hbm_ntm_rebirth:trinitite" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:waste_trinitite" }
+}

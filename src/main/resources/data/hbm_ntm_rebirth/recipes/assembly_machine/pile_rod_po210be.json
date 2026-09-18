@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 40,
+  "power": 200,
+  "input_items": [
+    { "count": 3, "ingredient": { "item": "hbm_ntm_rebirth:billet_po210be" } }
+  ],
+  "input_fluids": [],
+  "output_items": [ { "item": "hbm_ntm_rebirth:pile_rod", "damage": 1 } ],
+  "output_fluids": [],
+  "pools": [],
+  "auto_switch_group": "autoswitch.pilerod",
+  "internal_name": "ass.pilepobe",
+  "source_order": 46
+}

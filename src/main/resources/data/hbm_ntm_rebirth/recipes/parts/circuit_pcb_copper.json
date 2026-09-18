@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": { "item": "hbm_ntm_rebirth:plate_polymer" },
+    "P": { "tag": "forge:plates/copper" }
+  },
+  "pattern": ["I", "P"],
+  "result": { "item": "hbm_ntm_rebirth:circuit_pcb" },
+  "show_notification": true
+}

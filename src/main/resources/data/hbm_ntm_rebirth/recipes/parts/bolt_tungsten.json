@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": { "#": { "tag": "forge:ingots/tungsten" } },
+  "pattern": ["#", "#"],
+  "result": { "item": "hbm_ntm_rebirth:bolt_tungsten", "count": 16 },
+  "show_notification": true
+}

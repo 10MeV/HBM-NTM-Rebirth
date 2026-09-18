@@ -1,0 +1,12 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    { "ingredient": { "tag": "minecraft:planks" }, "count": 16, "legacy_ore": "plankWood" },
+    { "ingredient": { "tag": "forge:plates/steel" }, "count": 6, "legacy_ore": "plateSteel" },
+    { "ingredient": { "tag": "forge:ingots/copper" }, "count": 8, "legacy_ore": "ingotCopper" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:coil_copper" }, "count": 4 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:gear_large" }, "count": 1 }
+  ],
+  "output": { "item": "hbm_ntm_rebirth:machine_stirling" },
+  "tier_lower": 2
+}

@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:rbmk_rod_mod"
+    }
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:rbmk_rod"
+    },
+    {
+      "item": "hbm_ntm_rebirth:block_graphite",
+      "count": 4
+    },
+    {
+      "item": "hbm_ntm_rebirth:nugget_bismuth",
+      "count": 4
+    }
+  ],
+  "tier_lower": 4,
+  "overlay": "recycling"
+}

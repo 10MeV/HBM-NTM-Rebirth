@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "misc",
+  "pattern": [" C ", "LCR", " C "],
+  "key": {
+    "L": { "item": "hbm_ntm_rebirth:cigarette" },
+    "C": { "item": "hbm_ntm_rebirth:rag" },
+    "R": { "tag": "forge:gems/coal" }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:plushie",
+    "nbt": "{Variant:2}"
+  },
+  "show_notification": true
+}

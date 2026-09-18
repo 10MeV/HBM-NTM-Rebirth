@@ -1,0 +1,55 @@
+{
+  "type": "hbm_ntm_rebirth:precass",
+  "duration": 300,
+  "icon": {
+    "item": "hbm_ntm_rebirth:broken_item",
+    "nbt": "{itemID:\"hbm_ntm_rebirth:circuit_chip_quantum\",itemMeta:0}"
+  },
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:broken_item"
+      },
+      "partial_nbt": "{itemID:\"hbm_ntm_rebirth:circuit_chip_quantum\",itemMeta:0}"
+    }
+  ],
+  "internal_name": "precass.chip_quantum.recycle",
+  "name_wrapper": "precass.recycle",
+  "output_fluids": [
+    {
+      "amount": 188,
+      "fluid": "hbm_ntm_rebirth:helium4"
+    }
+  ],
+  "output_items": [
+    {
+      "chance": 0.75,
+      "count": 8,
+      "item": "hbm_ntm_rebirth:circuit_silicon"
+    },
+    {
+      "chance": 0.75,
+      "count": 2,
+      "item": "hbm_ntm_rebirth:wire_dense_bscco"
+    },
+    {
+      "chance": 0.75,
+      "count": 4,
+      "item": "hbm_ntm_rebirth:ingot_pc"
+    },
+    {
+      "chance": 0.75,
+      "count": 4,
+      "item": "hbm_ntm_rebirth:pellet_charged"
+    },
+    {
+      "chance": 0.75,
+      "count": 8,
+      "item": "hbm_ntm_rebirth:wire_gold"
+    }
+  ],
+  "pools": [],
+  "power": 20000
+}

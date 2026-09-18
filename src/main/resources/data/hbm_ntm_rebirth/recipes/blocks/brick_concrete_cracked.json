@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [" C ", "C C", " C "],
+  "key": { "C": { "item": "hbm_ntm_rebirth:brick_concrete" } },
+  "result": { "item": "hbm_ntm_rebirth:brick_concrete_cracked", "count": 6 }
+}

@@ -490,16 +490,9 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
     }
 
     private boolean canExtractExternalSlot(int slot) {
-        return kind.isOutputSlot(slot) || isCloggedInputSlot(slot);
-    }
-
-    private boolean isCloggedInputSlot(int slot) {
-        if (level == null) {
-            return false;
-        }
-        GenericMachineRecipe recipe = getSelectedRecipeDefinition();
-        return GenericMachineRecipeRuntime.isSlotClogged(recipe, kind.recipeMachine, level, items, slot,
-                kind.inputSlots);
+        // A clogged ingredient is not a product.  Do not expose it to
+        // external extraction; pipes may still insert through this view.
+        return kind.isOutputSlot(slot);
     }
 
     public Kind kind() {

@@ -1,0 +1,35 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "arc_material_outputs": [
+    {
+      "amount": 216,
+      "material": "Lanthanum"
+    }
+  ],
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": {
+        "type": "forge:tag_empty",
+        "tag": "forge:pipes/lanthanum"
+      }
+    }
+  ],
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:pipes/lanthanum"
+      },
+      "legacy_ore": "ntmpipeLanthanum"
+    }
+  ],
+  "internal_name": "arc.autogen.ntmpipeLanthanum",
+  "output_fluids": [],
+  "output_items": [],
+  "pools": [],
+  "power": 1000,
+  "source_order": 1519
+}

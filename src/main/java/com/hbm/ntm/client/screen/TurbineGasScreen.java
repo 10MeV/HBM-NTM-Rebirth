@@ -139,7 +139,8 @@ public class TurbineGasScreen extends AbstractContainerScreen<TurbineGasMenu> {
         double buttonDx = mouseX - leftPos - 88.0D;
         double buttonDy = mouseY - topPos - 40.0D;
         if (Math.sqrt(buttonDx * buttonDx + buttonDy * buttonDy) <= 8.0D) {
-            if (menu.getCounter() == 0 || menu.getCounter() == 579) {
+            if ((menu.getState() == 0 && menu.getCounter() == 0)
+                    || menu.getState() == 1) {
                 int value = menu.getState() - 1;
                 ModMessages.sendLegacyButton(menu.getBlockEntity().getBlockPos(), value,
                         TurbineGasBlockEntity.CONTROL_STATE);

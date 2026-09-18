@@ -1,0 +1,7 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:ingots/mingrade" }, "count": 1, "legacy_ore": "ingotMingrade" },
+  "output": { "item": "hbm_ntm_rebirth:deco_red_copper", "count": 4 },
+  "tier_lower": 1,
+  "overlay": "construction"
+}

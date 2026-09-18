@@ -1,0 +1,7 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:ingots/titanium" }, "count": 1, "legacy_ore": "ingotTitanium" },
+  "output": { "item": "hbm_ntm_rebirth:deco_titanium", "count": 4 },
+  "tier_lower": 1,
+  "overlay": "construction"
+}

@@ -71,9 +71,6 @@ public class FluidIconItem extends Item {
     }
 
     public static int getTintColor(ItemStack stack, int tintIndex) {
-        if (tintIndex <= 0) {
-            return 0xFFFFFF;
-        }
         FluidType type = getFluidType(stack);
         return type == HbmFluids.NONE ? 0xFFFFFF : type.getColor();
     }

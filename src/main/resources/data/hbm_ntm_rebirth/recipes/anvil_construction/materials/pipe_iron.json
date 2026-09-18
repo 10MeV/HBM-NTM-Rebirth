@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:plates/iron" }, "count": 3, "legacy_ore": "plateIron" },
+  "output": { "item": "hbm_ntm_rebirth:pipes_iron" },
+  "tier_lower": 1
+}

@@ -1,0 +1,29 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:pole_satellite_receiver"
+    }
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:ingot_steel",
+      "count": 3
+    },
+    {
+      "item": "hbm_ntm_rebirth:ingot_steel",
+      "count": 2,
+      "chance": 0.5
+    },
+    {
+      "item": "hbm_ntm_rebirth:circuit_vacuum_tube",
+      "count": 1,
+      "chance": 0.5
+    },
+    {
+      "item": "hbm_ntm_rebirth:wire_fine_mingrade"
+    }
+  ],
+  "tier_lower": 2,
+  "overlay": "recycling"
+}

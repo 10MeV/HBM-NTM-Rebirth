@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "pattern": [" F ", "FCF", " F "],
+  "key": {
+    "F": { "item": "minecraft:flint" },
+    "C": { "item": "hbm_ntm_rebirth:charge_dynamite" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:charge_miner" }
+}

@@ -281,6 +281,7 @@ import com.hbm.ntm.network.HbmNetworkActions;
 import com.hbm.ntm.multiblock.LegacyMultiblockOffsets;
 import com.hbm.ntm.multiblock.LegacyMultiblockPorts;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
+import com.hbm.ntm.multiblock.LegacyProxyMode;
 import com.hbm.ntm.multiblock.MultiblockCoreBlock;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.multiblock.LegacyMultiblockPlaceable;
@@ -1438,7 +1439,7 @@ public final class EnergyMk2GameTests {
                 runtimeFamily("particle_accelerator", ModRecipes.PARTICLE_ACCELERATOR, 11),
                 runtimeFamily("ammo_press", ModRecipes.AMMO_PRESS, 89),
                 runtimeFamily("annihilator", ModRecipes.ANNIHILATOR, 0),
-                runtimeFamily("anvil_construction", ModRecipes.ANVIL_CONSTRUCTION, 61),
+                runtimeFamily("anvil_construction", ModRecipes.ANVIL_CONSTRUCTION, 231),
                 runtimeFamily("anvil_smithing", ModRecipes.ANVIL_SMITHING, 58),
                 runtimeFamily("pedestal", ModRecipes.PEDESTAL, 12),
                 runtimeFamily("crucible", ModRecipes.CRUCIBLE, 13),
@@ -8453,15 +8454,18 @@ public final class EnergyMk2GameTests {
                 .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
         BlockState silexState = ModBlocks.MACHINE_SILEX.get().defaultBlockState()
                 .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
-        level.setBlock(felPos, felState, Block.UPDATE_ALL);
         BlockPos beamSilexPos = felPos.east(5).above();
         BlockPos silexCorePos = beamSilexPos.east().below();
-        level.setBlock(beamSilexPos, silexState, Block.UPDATE_ALL);
-        level.setBlock(silexCorePos, silexState, Block.UPDATE_ALL);
+        placeCompleteLegacyMultiblock(level, felPos, felState);
+        placeCompleteLegacyMultiblock(level, silexCorePos, silexState);
         if (!(level.getBlockEntity(felPos) instanceof FelBlockEntity fel)
                 || !(level.getBlockEntity(silexCorePos) instanceof SilexBlockEntity silex)) {
             throw new AssertionError("FEL same-mode SILEX fixture did not create both required block entities");
         }
+        assertTrue(level.getBlockState(beamSilexPos).is(ModBlocks.DUMMY_BLOCK.get()),
+                "the real modern SILEX illuminated cell is the shared multiblock dummy");
+        assertSame(silex, MultiblockHelper.resolveCoreBlockEntity(level, beamSilexPos),
+                "the illuminated SILEX dummy resolves to its owning core");
         silex.acceptLaser(Direction.EAST, LaserWavelength.IR);
         fel.getItems().setStackInSlot(FelBlockEntity.SLOT_CRYSTAL, new ItemStack(ModItems.LASER_CRYSTAL_CO2.get()));
         fel.getEnergyStorage().setPower(100_000L);
@@ -8480,15 +8484,18 @@ public final class EnergyMk2GameTests {
                 .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
         BlockState silexState = ModBlocks.MACHINE_SILEX.get().defaultBlockState()
                 .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
-        level.setBlock(felPos, felState, Block.UPDATE_ALL);
         BlockPos beamSilexPos = felPos.east(5).above();
         BlockPos silexCorePos = beamSilexPos.east().below();
-        level.setBlock(beamSilexPos, silexState, Block.UPDATE_ALL);
-        level.setBlock(silexCorePos, silexState, Block.UPDATE_ALL);
+        placeCompleteLegacyMultiblock(level, felPos, felState);
+        placeCompleteLegacyMultiblock(level, silexCorePos, silexState);
         if (!(level.getBlockEntity(felPos) instanceof FelBlockEntity fel)
                 || !(level.getBlockEntity(silexCorePos) instanceof SilexBlockEntity silex)) {
             throw new AssertionError("FEL/SILEX legacy-coordinate fixture did not create both required cores");
         }
+        assertTrue(level.getBlockState(beamSilexPos).is(ModBlocks.DUMMY_BLOCK.get()),
+                "production SILEX placement uses a shared dummy at the legacy beam coordinate");
+        assertSame(silex, MultiblockHelper.resolveCoreBlockEntity(level, beamSilexPos),
+                "production SILEX beam dummy owns the expected +facing/-up core");
         fel.getItems().setStackInSlot(FelBlockEntity.SLOT_CRYSTAL, new ItemStack(ModItems.LASER_CRYSTAL_CO2.get()));
         fel.getEnergyStorage().setPower(100_000L);
         fel.handleLegacyButton(gameTestPlayer(level), 0, FelBlockEntity.CONTROL_POWER);
@@ -8508,11 +8515,10 @@ public final class EnergyMk2GameTests {
                 .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
         BlockState silexState = ModBlocks.MACHINE_SILEX.get().defaultBlockState()
                 .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
-        level.setBlock(felPos, felState, Block.UPDATE_ALL);
         BlockPos beamSilexPos = felPos.east(5).above();
         BlockPos silexCorePos = beamSilexPos.east().below();
-        level.setBlock(beamSilexPos, silexState, Block.UPDATE_ALL);
-        level.setBlock(silexCorePos, silexState, Block.UPDATE_ALL);
+        placeCompleteLegacyMultiblock(level, felPos, felState);
+        placeCompleteLegacyMultiblock(level, silexCorePos, silexState);
         if (!(level.getBlockEntity(felPos) instanceof FelBlockEntity fel)
                 || !(level.getBlockEntity(silexCorePos) instanceof SilexBlockEntity silex)) {
             throw new AssertionError("FEL all-wavelength SILEX fixture did not create both required cores");
@@ -8547,21 +8553,20 @@ public final class EnergyMk2GameTests {
         BlockPos felPos = helper.absolutePos(new BlockPos(4, 2, 4));
         BlockState felState = ModBlocks.MACHINE_FEL.get().defaultBlockState()
                 .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
-        BlockState beamDummyState = ModBlocks.MACHINE_SILEX.get().defaultBlockState()
-                .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
         BlockState reverseCoreState = ModBlocks.MACHINE_SILEX.get().defaultBlockState()
                 .setValue(HorizontalMachineBlock.FACING, Direction.WEST);
         BlockState perpendicularCoreState = ModBlocks.MACHINE_SILEX.get().defaultBlockState()
                 .setValue(HorizontalMachineBlock.FACING, Direction.NORTH);
-        level.setBlock(felPos, felState, Block.UPDATE_ALL);
         BlockPos beamSilexPos = felPos.east(5).above();
         BlockPos silexCorePos = beamSilexPos.east().below();
-        level.setBlock(beamSilexPos, beamDummyState, Block.UPDATE_ALL);
-        level.setBlock(silexCorePos, reverseCoreState, Block.UPDATE_ALL);
+        placeCompleteLegacyMultiblock(level, felPos, felState);
+        placeCompleteLegacyMultiblock(level, silexCorePos, reverseCoreState);
         if (!(level.getBlockEntity(felPos) instanceof FelBlockEntity fel)
                 || !(level.getBlockEntity(silexCorePos) instanceof SilexBlockEntity reverseSilex)) {
             throw new AssertionError("FEL SILEX-direction fixture did not create both required cores");
         }
+        assertTrue(level.getBlockState(beamSilexPos).is(ModBlocks.DUMMY_BLOCK.get()),
+                "the direction fixture illuminates a real shared SILEX dummy");
         fel.getItems().setStackInSlot(FelBlockEntity.SLOT_CRYSTAL, new ItemStack(ModItems.LASER_CRYSTAL_CO2.get()));
         fel.getEnergyStorage().setPower(100_000L);
         fel.handleLegacyButton(gameTestPlayer(level), 0, FelBlockEntity.CONTROL_POWER);
@@ -8569,6 +8574,7 @@ public final class EnergyMk2GameTests {
         assertTrue(reverseSilex.getMode() == LaserWavelength.IR,
                 "a SILEX core facing opposite the FEL remains a valid legacy axial laser target");
 
+        reverseSilex.getItems().setStackInSlot(SilexBlockEntity.SLOT_INPUT, new ItemStack(Items.GRAVEL));
         level.setBlock(silexCorePos, perpendicularCoreState, Block.UPDATE_ALL);
         fel.getItems().setStackInSlot(FelBlockEntity.SLOT_CRYSTAL,
                 new ItemStack(ModItems.LASER_CRYSTAL_BISMUTH.get()));
@@ -8576,6 +8582,102 @@ public final class EnergyMk2GameTests {
         FelBlockEntity.serverTick(level, felPos, felState, fel);
         assertTrue(!(level.getBlockEntity(silexCorePos) instanceof SilexBlockEntity),
                 "a perpendicular SILEX core is rejected and dismantled by the legacy FEL scan");
+        List<ItemEntity> drops = level.getEntitiesOfClass(ItemEntity.class,
+                new AABB(felPos.offset(-2, -1, -2), silexCorePos.offset(3, 4, 3)));
+        assertEquals(1L, drops.stream()
+                        .filter(drop -> drop.getItem().is(ModBlocks.MACHINE_SILEX.get().asItem()))
+                        .mapToLong(drop -> drop.getItem().getCount()).sum(),
+                "an invalid SILEX emits exactly one replacement machine item at the beam cell");
+        assertEquals(1L, drops.stream()
+                        .filter(drop -> drop.getItem().is(Items.GRAVEL))
+                        .mapToLong(drop -> drop.getItem().getCount()).sum(),
+                "invalid SILEX dismantling preserves the old core inventory drop");
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "drone_empty", batch = "felLegacyBeamContracts")
+    public static void felRecognizesRealSilexMultiblocksInAllFourDirections(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos felPos = helper.absolutePos(new BlockPos(12, 2, 8));
+        for (Direction facing : Direction.Plane.HORIZONTAL) {
+            clearBox(level, felPos.offset(-9, -1, -7), felPos.offset(9, 6, 7));
+            BlockState felState = ModBlocks.MACHINE_FEL.get().defaultBlockState()
+                    .setValue(HorizontalMachineBlock.FACING, facing);
+            BlockState silexState = ModBlocks.MACHINE_SILEX.get().defaultBlockState()
+                    .setValue(HorizontalMachineBlock.FACING, facing);
+            BlockPos beamSilexPos = felPos.relative(facing, 5).above();
+            BlockPos silexCorePos = felPos.relative(facing, 6);
+            placeCompleteLegacyMultiblock(level, felPos, felState);
+            placeCompleteLegacyMultiblock(level, silexCorePos, silexState);
+            if (!(level.getBlockEntity(felPos) instanceof FelBlockEntity fel)
+                    || !(level.getBlockEntity(silexCorePos) instanceof SilexBlockEntity silex)) {
+                throw new AssertionError("four-way FEL/SILEX fixture failed for " + facing);
+            }
+            assertTrue(level.getBlockState(beamSilexPos).is(ModBlocks.DUMMY_BLOCK.get()),
+                    "the " + facing + " beam reaches the real SILEX dummy rather than a second core");
+            assertSame(silex, MultiblockHelper.resolveCoreBlockEntity(level, beamSilexPos),
+                    "the " + facing + " illuminated dummy resolves to the intended SILEX core");
+            fel.getItems().setStackInSlot(FelBlockEntity.SLOT_CRYSTAL,
+                    new ItemStack(ModItems.LASER_CRYSTAL_CO2.get()));
+            fel.getEnergyStorage().setPower(100_000L);
+            fel.handleLegacyButton(gameTestPlayer(level), 0, FelBlockEntity.CONTROL_POWER);
+            FelBlockEntity.serverTick(level, felPos, felState, fel);
+            assertSame(LaserWavelength.IR, silex.getMode(),
+                    "the " + facing + " FEL direction writes IR to its real SILEX core");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "drone_empty", batch = "felLegacyBeamContracts")
+    public static void felEnforcesLegacySilexMinimumDistanceAndSpacing(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos felPos = helper.absolutePos(new BlockPos(4, 2, 4));
+        BlockState felState = ModBlocks.MACHINE_FEL.get().defaultBlockState()
+                .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
+        BlockState silexState = ModBlocks.MACHINE_SILEX.get().defaultBlockState()
+                .setValue(HorizontalMachineBlock.FACING, Direction.EAST);
+        placeCompleteLegacyMultiblock(level, felPos, felState);
+        if (!(level.getBlockEntity(felPos) instanceof FelBlockEntity fel)) {
+            throw new AssertionError("FEL distance/spacing fixture did not create its core");
+        }
+        fel.getItems().setStackInSlot(FelBlockEntity.SLOT_CRYSTAL,
+                new ItemStack(ModItems.LASER_CRYSTAL_CO2.get()));
+        fel.getEnergyStorage().setPower(1_000_000L);
+        fel.handleLegacyButton(gameTestPlayer(level), 0, FelBlockEntity.CONTROL_POWER);
+
+        BlockPos tooCloseCore = felPos.east(5);
+        placeCompleteLegacyMultiblock(level, tooCloseCore, silexState);
+        FelBlockEntity.serverTick(level, felPos, felState, fel);
+        assertTrue(!(level.getBlockEntity(tooCloseCore) instanceof SilexBlockEntity),
+                "a SILEX whose leading dummy is at i=4 is dismantled below the legacy minimum distance");
+
+        BlockPos firstCore = felPos.east(6);
+        BlockPos adjacentSecondCore = felPos.east(9);
+        placeCompleteLegacyMultiblock(level, firstCore, silexState);
+        placeCompleteLegacyMultiblock(level, adjacentSecondCore, silexState);
+        fel.getEnergyStorage().setPower(1_000_000L);
+        FelBlockEntity.serverTick(level, felPos, felState, fel);
+        assertTrue(level.getBlockEntity(firstCore) instanceof SilexBlockEntity first
+                        && first.getMode() == LaserWavelength.IR,
+                "a SILEX whose leading dummy is at i=5 accepts the legacy minimum-distance beam");
+        assertTrue(!(level.getBlockEntity(adjacentSecondCore) instanceof SilexBlockEntity),
+                "a second SILEX with no non-opaque beam gap is dismantled by silexSpacing");
+
+        level.destroyBlock(firstCore, false);
+        BlockPos separatedFirstCore = felPos.east(6);
+        BlockPos separatedSecondCore = felPos.east(10);
+        placeCompleteLegacyMultiblock(level, separatedFirstCore, silexState);
+        placeCompleteLegacyMultiblock(level, separatedSecondCore, silexState);
+        fel.getItems().setStackInSlot(FelBlockEntity.SLOT_CRYSTAL,
+                new ItemStack(ModItems.LASER_CRYSTAL_BISMUTH.get()));
+        fel.getEnergyStorage().setPower(1_000_000L);
+        FelBlockEntity.serverTick(level, felPos, felState, fel);
+        assertTrue(level.getBlockEntity(separatedFirstCore) instanceof SilexBlockEntity first
+                        && first.getMode() == LaserWavelength.VISIBLE,
+                "the first separated SILEX receives the changed wavelength");
+        assertTrue(level.getBlockEntity(separatedSecondCore) instanceof SilexBlockEntity second
+                        && second.getMode() == LaserWavelength.VISIBLE,
+                "one non-opaque beam cell resets silexSpacing and permits the next SILEX");
         helper.succeed();
     }
 
@@ -11238,6 +11340,13 @@ public final class EnergyMk2GameTests {
                             + " has no resolved runtime display stack"));
             assembler.getItems().setStackInSlot(AssemblyMachineBlockEntity.SLOT_INPUT_START + inputIndex, input);
         }
+        IItemHandler automation = assembler.getCapability(ForgeCapabilities.ITEM_HANDLER, Direction.NORTH)
+                .orElseThrow(() -> new AssertionError("assembly machine has no sided item capability"));
+        assertTrue(automation.extractItem(0, 1, true).isEmpty(),
+                "assembly machine automation cannot extract its first ingredient slot");
+        assertTrue(!automation.insertItem(0, recipe.getItemInputs().get(0).displayStacks().stream()
+                .findFirst().orElseThrow().copy(), true).isEmpty(),
+                "assembly machine automation keeps the mapped input slot insert-only");
         ItemStack expectedOutput = recipe.getItemOutputs().get(0).copy();
         // TileEntityMachineAssemblyMachine retains an already charged power buffer
         // when it derives maxPower: max(power, recipe.power * 100, 100_000).
@@ -11259,6 +11368,8 @@ public final class EnergyMk2GameTests {
                 "ass.atomicClock completes into its source-backed output item");
         assertEquals(expectedOutput.getCount(), output.getCount(),
                 "ass.atomicClock produces its exact source-backed output count");
+        assertSame(expectedOutput.getItem(), automation.extractItem(12, 1, true).getItem(),
+                "assembly machine automation exposes the product slot for extraction");
         for (int index = 0; index < recipe.getItemInputs().size(); index++) {
             assertTrue(assembler.getItems().getStackInSlot(AssemblyMachineBlockEntity.SLOT_INPUT_START + index).isEmpty(),
                     "ass.atomicClock consumes ordered input slot " + index + " exactly once");
@@ -12791,7 +12902,7 @@ public final class EnergyMk2GameTests {
         Direction side = LegacyMultiblockOffsets.legacyUpSide(facing);
         assertPlayerPlacedProviderMachineHasResolvingProxies(level, chungus, "player-placed machine_chungus",
                 List.of(
-                        LegacyMultiblockOffsets.relative(facing, -2, 0, 2),
+                        LegacyMultiblockOffsets.relative(facing, 4, 0, 2),
                         LegacyMultiblockOffsets.relative(facing, -10, 0),
                         LegacyMultiblockOffsets.relative(facing, side, 0, 2, 0),
                         LegacyMultiblockOffsets.relative(facing, side, 0, -2, 0)));
@@ -12816,6 +12927,105 @@ public final class EnergyMk2GameTests {
                 "Energy port from " + machinePos.toShortString(), "conductor=", "lastTransfer=");
         assertCommandVisibleMessage(level, machinePos, "hbm energy ports " + commandPos(machinePos), 1,
                 "Energy ports at " + machinePos.toShortString(), "total=1", "networked=");
+
+        helper.succeed();
+    }
+
+    /**
+     * MachineChungus uses the old BlockDummyable placement relocation rather
+     * than the clicked block as its core.  Exercise the actual block-item
+     * route in every horizontal direction so the two quarter-turn directions
+     * cannot silently drift from the source layout or proxy coordinates.
+     */
+    @GameTest(templateNamespace = HbmNtm.MOD_ID, template = "empty", batch = "energyMk2ChungusFourWayPlacement")
+    public static void playerUseOnPlacesChungusWithTheCompleteLegacyLayoutInAllDirections(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Block machine = ModBlocks.MACHINE_CHUNGUS.get();
+        LegacyMultiblockPlaceable placeable = (LegacyMultiblockPlaceable) machine;
+        MultiblockCoreBlock coreBlock = (MultiblockCoreBlock) machine;
+        Direction[] facings = { Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST };
+        var player = gameTestPlayer(level);
+        player.getInventory().clearContent();
+
+        for (int index = 0; index < facings.length; index++) {
+            Direction facing = facings[index];
+            BlockPos supportPos = helper.absolutePos(new BlockPos(32 + index * 48, 2, 256));
+            forceLoadedChunks(level, supportPos.offset(-18, -8, -18), supportPos.offset(18, 11, 18));
+            clearBox(level, supportPos.above().offset(-18, -8, -18), supportPos.above(10).offset(18, 0, 18));
+            level.setBlock(supportPos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+
+            player.setPos(supportPos.getX() + 0.5D, supportPos.getY() + 1.0D, supportPos.getZ() + 0.5D);
+            player.setYRot(chungusPlacementYaw(facing));
+            player.setXRot(0.0F);
+            ItemStack stack = new ItemStack(machine);
+            player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+
+            UseOnContext useOnContext = new UseOnContext(player, InteractionHand.MAIN_HAND,
+                    blockHit(supportPos));
+            BlockPlaceContext placementContext = new BlockPlaceContext(useOnContext);
+            BlockState placementState = placeable.getDirectPlacementState(placementContext);
+            assertTrue(placementState != null,
+                    "machine_chungus has a direct placement state for " + facing);
+            assertEquals(facing, placementState.getValue(HorizontalMachineBlock.FACING),
+                    "machine_chungus derives the requested facing for " + facing);
+            BlockPos expectedCorePos = placeable.getDirectPlacementCore(placementContext, placementState);
+            BlockPos expectedRelocatedCore = supportPos.above().relative(facing.getOpposite(), 3);
+            assertTrue(expectedCorePos.equals(expectedRelocatedCore),
+                    "machine_chungus uses the source -3 facing relocation for " + facing
+                            + "; expected=" + expectedRelocatedCore + " actual=" + expectedCorePos);
+            assertTrue(placementContext.canPlace(),
+                    "machine_chungus BlockPlaceContext can place for " + facing);
+            LegacyMultiblockLayout layout = coreBlock.getMultiblockLayout(placementState, level, expectedCorePos);
+            assertTrue(placeable.canPlaceDirectMultiblock(level, expectedCorePos,
+                    placementContext.getClickedPos(), placementState),
+                    "machine_chungus source XR footprint is clear for " + facing + "; problems="
+                            + MultiblockHelper.findLayoutProblems(level, expectedCorePos, layout));
+
+            InteractionResult result = stack.useOn(useOnContext);
+            assertTrue(result.consumesAction(),
+                    "machine_chungus block item places and consumes action for " + facing);
+            assertTrue(level.getBlockEntity(expectedCorePos) instanceof ChungusBlockEntity,
+                    "machine_chungus core remains at the source-relocated position for " + facing);
+
+            BlockState coreState = level.getBlockState(expectedCorePos);
+            assertTrue(coreState.is(machine), "machine_chungus core block exists for " + facing);
+            assertEquals(facing, coreState.getValue(HorizontalMachineBlock.FACING),
+                    "machine_chungus core state keeps the requested facing for " + facing);
+            assertTrue(level.getBlockEntity(expectedCorePos) instanceof ChungusBlockEntity,
+                    "machine_chungus creates its real core block entity for " + facing);
+            BlockEntity core = level.getBlockEntity(expectedCorePos);
+            assertTrue(MultiblockHelper.isLayoutComplete(level, expectedCorePos, layout),
+                    "machine_chungus complete source layout is present for " + facing);
+
+            for (BlockPos offset : layout.offsets()) {
+                if (offset.equals(BlockPos.ZERO)) {
+                    continue;
+                }
+                BlockPos dummyPos = expectedCorePos.offset(offset);
+                assertTrue(level.getBlockEntity(dummyPos) instanceof MultiblockDummyBlockEntity,
+                        "machine_chungus writes every legacy dummy for " + facing + " at " + offset);
+                assertSame(core, MultiblockHelper.resolveCoreBlockEntity(level, dummyPos),
+                        "machine_chungus dummy resolves to the correct core for " + facing + " at " + offset);
+            }
+
+            List<BlockPos> proxyOffsets = List.of(
+                    LegacyMultiblockOffsets.relative(facing, 4, 0, 2),
+                    LegacyMultiblockOffsets.relative(facing, -10, 0),
+                    LegacyMultiblockOffsets.relative(facing, LegacyMultiblockOffsets.legacyUpSide(facing), 0, 2, 0),
+                    LegacyMultiblockOffsets.relative(facing, LegacyMultiblockOffsets.legacyUpSide(facing), 0, -2, 0));
+            LegacyProxyMode expectedProxyMode = LegacyProxyMode.combo(false, true, true);
+            for (BlockPos offset : proxyOffsets) {
+                assertTrue(layout.isLegacyExtraOffset(offset),
+                        "machine_chungus keeps the source extra/proxy marker for " + facing + " at " + offset);
+                assertTrue(expectedProxyMode.equals(layout.proxyMode(offset)),
+                        "machine_chungus keeps power+fluid-only proxy mode for " + facing + " at " + offset);
+                BlockPos proxyPos = expectedCorePos.offset(offset);
+                assertTrue(level.getBlockEntity(proxyPos) instanceof MultiblockDummyBlockEntity,
+                        "machine_chungus extra proxy exists for " + facing + " at " + offset);
+                assertSame(core, MultiblockHelper.resolveCoreBlockEntity(level, proxyPos),
+                        "machine_chungus extra proxy resolves to the correct core for " + facing + " at " + offset);
+            }
+        }
 
         helper.succeed();
     }
@@ -27037,6 +27247,31 @@ public final class EnergyMk2GameTests {
 
     private static BlockHitResult blockHit(BlockPos pos) {
         return new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false);
+    }
+
+    private static void placeCompleteLegacyMultiblock(ServerLevel level, BlockPos corePos, BlockState state) {
+        if (!(state.getBlock() instanceof LegacyMultiblockPlaceable placeable)) {
+            throw new AssertionError("test fixture block is not a legacy multiblock: " + state.getBlock());
+        }
+        if (!level.setBlock(corePos, state, Block.UPDATE_ALL)) {
+            throw new AssertionError("test fixture could not place legacy multiblock core at " + corePos);
+        }
+        placeable.completeDirectMultiblockPlacement(level, corePos, level.getBlockState(corePos), null,
+                new ItemStack(state.getBlock()));
+        if (!MultiblockHelper.isOperationalCoreLayoutComplete(level, corePos)) {
+            throw new AssertionError("test fixture did not complete legacy multiblock at " + corePos
+                    + "; problems=" + MultiblockHelper.findCoreLayoutProblems(level, corePos));
+        }
+    }
+
+    private static float chungusPlacementYaw(Direction facing) {
+        return switch (facing) {
+            case NORTH -> 0.0F;
+            case EAST -> 90.0F;
+            case SOUTH -> 180.0F;
+            case WEST -> 270.0F;
+            default -> 180.0F;
+        };
     }
 
     private static BlockHitResult blockHit(BlockPos pos, Direction direction) {

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "tag": "forge:circuits/advanced"
+    },
+    "E": {
+      "tag": "forge:ingots/euphemium"
+    },
+    "S": {
+      "tag": "forge:plates/steel"
+    },
+    "W": {
+      "tag": "forge:wires/schrabidium"
+    }
+  },
+  "pattern": [
+    " W",
+    "SC",
+    "CE"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:igniter"
+  },
+  "show_notification": true
+}

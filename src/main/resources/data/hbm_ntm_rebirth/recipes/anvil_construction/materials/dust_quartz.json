@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:dusts/quartz" }, "legacy_ore": "dustNetherQuartz" },
+  "output": { "item": "minecraft:quartz" },
+  "tier_lower": 3
+}

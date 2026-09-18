@@ -1,0 +1,12 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    { "ingredient": { "tag": "forge:ingots/any_plastic" }, "count": 4, "legacy_ore": "ingotAnyPlastic" },
+    { "ingredient": { "tag": "forge:ingots/copper" }, "count": 8, "legacy_ore": "ingotCopper" },
+    { "ingredient": { "tag": "forge:plates/steel" }, "count": 8, "legacy_ore": "plateSteel" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:coil_tungsten" }, "count": 8 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:circuit_basic" }, "count": 1 }
+  ],
+  "output": { "item": "hbm_ntm_rebirth:heater_electric" },
+  "tier_lower": 3
+}

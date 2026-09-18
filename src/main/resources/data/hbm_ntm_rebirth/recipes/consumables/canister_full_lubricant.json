@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:shapeless_nbt",
+  "category": "misc",
+  "ingredients": [
+    { "type": "hbm_ntm_rebirth:fluid_container", "fluid": "hbm_ntm_rebirth:heatingoil", "amount": 1000 },
+    { "type": "hbm_ntm_rebirth:fluid_container", "fluid": "hbm_ntm_rebirth:unsaturateds", "amount": 1000 },
+    { "item": "hbm_ntm_rebirth:canister_empty" },
+    { "item": "hbm_ntm_rebirth:canister_empty" },
+    { "item": "hbm_ntm_rebirth:chemistry_set" }
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:canister_full",
+    "count": 2,
+    "nbt": "{hbm_fluid:\"lubricant\",hbm_fluid_amount:1000,hbm_fluid_pressure:0}"
+  }
+}

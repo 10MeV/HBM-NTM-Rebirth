@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    { "ingredient": { "item": "minecraft:stone_bricks" }, "count": 4 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:ingot_firebrick" }, "count": 32 },
+    { "ingredient": { "tag": "forge:plates/copper" }, "count": 8, "legacy_ore": "plateCopper" }
+  ],
+  "output": { "item": "hbm_ntm_rebirth:machine_blast_furnace" },
+  "tier_lower": 1
+}

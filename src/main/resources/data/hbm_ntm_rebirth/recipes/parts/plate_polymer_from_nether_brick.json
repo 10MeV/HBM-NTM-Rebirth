@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": { "B": { "item": "minecraft:nether_brick" } },
+  "pattern": ["BB"],
+  "result": { "item": "hbm_ntm_rebirth:plate_polymer", "count": 4 },
+  "show_notification": true
+}

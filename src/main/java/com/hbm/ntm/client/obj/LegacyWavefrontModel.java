@@ -6,6 +6,7 @@ import com.hbm.ntm.client.render.HbmOptimizedRenderShaders;
 import com.hbm.ntm.client.render.HbmGlVaoSafety;
 import com.hbm.ntm.client.render.HbmMdiRenderDiag;
 import com.hbm.ntm.client.render.HbmRenderFrameLight;
+import com.hbm.ntm.client.render.LegacyParticleModelRenderContext;
 import com.hbm.ntm.client.renderer.LegacyItemRenderContext;
 import com.hbm.ntm.client.render.HbmRenderFrameFlags;
 import com.hbm.ntm.client.render.HbmRenderBackendDiagnostics;
@@ -2145,6 +2146,11 @@ public final class LegacyWavefrontModel {
         float determinant = position.m00() * (position.m11() * position.m22() - position.m12() * position.m21())
                 - position.m01() * (position.m10() * position.m22() - position.m12() * position.m20())
                 + position.m02() * (position.m10() * position.m21() - position.m11() * position.m20());
+        if (LegacyItemRenderContext.isGui()) {
+            // GuiGraphics carries a screen-space Y reflection. The GUI projection cancels it,
+            // so it must not be treated as a model-local mirror when resolving face culling.
+            determinant = -determinant;
+        }
         if (determinant >= 0.0F) {
             return renderMode;
         }
@@ -2920,6 +2926,7 @@ public final class LegacyWavefrontModel {
         UNTEXTURED_DIRECT_VERTEX_COLOR_TRIANGLE,
         UNTEXTURED_DIRECT_LINES,
         GPU_DISABLED,
+        GPU_CALLER_OWNED_MODEL_VIEW,
         GPU_SHADER_ACTIVE,
         GPU_NOT_RENDER_THREAD,
         GPU_UNSUPPORTED_RENDER_MODE,
@@ -3210,6 +3217,10 @@ public final class LegacyWavefrontModel {
         private int mdiDrawGroupPoolCursor;
         private int[] irisQueuedLightmapSlotScratch = NO_LIGHTMAP_SLOTS;
         private ByteBuffer instancedUploadScratch;
+        // BufferBuilder allocates through MemoryTracker.malloc and has no close() method. Keep one
+        // reusable builder per upload family instead of leaking a native allocation on every draw.
+        private BufferBuilder gpuUploadBuilder;
+        private BufferBuilder irisUploadBuilder;
         private final AtomicLong gpuBufferBytes = new AtomicLong();
         private final AtomicLong gpuUploadAttempts = new AtomicLong();
         private final AtomicLong gpuUploadFailures = new AtomicLong();
@@ -4337,6 +4348,14 @@ public final class LegacyWavefrontModel {
          */
         private static RenderBackendFallbackReason safeImmediateSingleMeshFallbackReason(
                 HbmRenderFrameFlags.Snapshot flags) {
+            // ParticleEngine owns the active camera rotation in RenderSystem's model-view stack,
+            // while a Particle supplies only a camera-relative local PoseStack. Immediate and
+            // queued OBJ paths would otherwise replace the complete model-view matrix with that
+            // local pose, making 3D particles rotate with the camera. The caller-owned CPU buffer
+            // path composes the two transforms at flush time and also preserves particle ordering.
+            if (LegacyParticleModelRenderContext.isActive()) {
+                return RenderBackendFallbackReason.GPU_CALLER_OWNED_MODEL_VIEW;
+            }
             // Every BEWLR context must submit to the caller-owned MultiBufferSource. GUI,
             // dropped-item, item-frame and hand rendering all have an ItemRenderer-managed
             // buffer lifecycle, and the non-GUI calls can occur outside the block-entity
@@ -5368,6 +5387,27 @@ public final class LegacyWavefrontModel {
             return true;
         }
 
+        private BufferBuilder gpuUploadBuilderFor(int initialCapacity) {
+            if (gpuUploadBuilder == null) {
+                gpuUploadBuilder = new BufferBuilder(Math.max(256, initialCapacity));
+            } else if (gpuUploadBuilder.building()) {
+                // A vertex emission failure can leave the reusable builder in its building state.
+                // Discard that partial batch before the next upload so one bad draw cannot poison
+                // every subsequent frame.
+                gpuUploadBuilder.discard();
+            }
+            return gpuUploadBuilder;
+        }
+
+        private BufferBuilder irisUploadBuilderFor(int initialCapacity) {
+            if (irisUploadBuilder == null) {
+                irisUploadBuilder = new BufferBuilder(Math.max(256, initialCapacity));
+            } else if (irisUploadBuilder.building()) {
+                irisUploadBuilder.discard();
+            }
+            return irisUploadBuilder;
+        }
+
         private RenderBackendFallbackReason instancedUploadUnavailableReason() {
             if (!RenderSystem.isOnRenderThread()) {
                 if (!warnedInstancedOffThreadUpload) {
@@ -5660,7 +5700,7 @@ public final class LegacyWavefrontModel {
                     throw new GpuMeshTemporarilyUnavailableException(
                             "GPU mesh upload unavailable in the current render context");
                 }
-                BufferBuilder builder = new BufferBuilder(256);
+                BufferBuilder builder = gpuUploadBuilderFor(256);
                 builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
                 emitUntexturedVertexColorIdentity(builder, quad.v0());
                 emitUntexturedVertexColorIdentity(builder, quad.v1());
@@ -5681,7 +5721,7 @@ public final class LegacyWavefrontModel {
                     throw new GpuMeshTemporarilyUnavailableException(
                             "GPU mesh upload unavailable in the current render context");
                 }
-                BufferBuilder builder = new BufferBuilder(256);
+                BufferBuilder builder = gpuUploadBuilderFor(256);
                 builder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
                 emitUntexturedVertexColorIdentity(builder, triangle.v0());
                 emitUntexturedVertexColorIdentity(builder, triangle.v1());
@@ -5702,7 +5742,7 @@ public final class LegacyWavefrontModel {
                     throw new GpuMeshTemporarilyUnavailableException(
                             "GPU mesh upload unavailable in the current render context");
                 }
-                BufferBuilder builder = new BufferBuilder(Math.max(256, triangles.size() * 48));
+                BufferBuilder builder = gpuUploadBuilderFor(Math.max(256, triangles.size() * 48));
                 builder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
                 for (UntexturedVertexColorTransientTriangle triangle : triangles) {
                     emitUntexturedVertexColorIdentity(builder, triangle.v0());
@@ -5725,7 +5765,7 @@ public final class LegacyWavefrontModel {
                     throw new GpuMeshTemporarilyUnavailableException(
                             "GPU mesh upload unavailable in the current render context");
                 }
-                BufferBuilder builder = new BufferBuilder(Math.max(256, lines.size() * 48));
+                BufferBuilder builder = gpuUploadBuilderFor(Math.max(256, lines.size() * 48));
                 builder.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR_NORMAL);
                 for (UntexturedLineTransient line : lines) {
                     emitLineVertexIdentity(builder, line.x0(), line.y0(), line.z0(), line.color(), line.alpha(),
@@ -5756,7 +5796,7 @@ public final class LegacyWavefrontModel {
                 throw new GpuMeshTemporarilyUnavailableException(
                         "GPU mesh upload unavailable in the current render context");
             }
-            BufferBuilder builder = new BufferBuilder(Math.max(256, vertices.size() * 40));
+            BufferBuilder builder = gpuUploadBuilderFor(Math.max(256, vertices.size() * 40));
             builder.begin(drawMode, DefaultVertexFormat.NEW_ENTITY);
             emitPreparedVertices(vertices, builder, IDENTITY_POSITION, IDENTITY_NORMAL, packedLight, packedOverlay,
                     red, green, blue, alpha, false, smoothing, uvTransform);
@@ -5772,7 +5812,7 @@ public final class LegacyWavefrontModel {
                 throw new GpuMeshTemporarilyUnavailableException(
                         "GPU mesh upload unavailable in the current render context");
             }
-            BufferBuilder builder = new BufferBuilder(Math.max(256, vertices.size() * 40));
+            BufferBuilder builder = gpuUploadBuilderFor(Math.max(256, vertices.size() * 40));
             builder.begin(drawMode, DefaultVertexFormat.NEW_ENTITY);
             emitPreparedVerticesWithSprite(vertices, sprite, builder, IDENTITY_POSITION, IDENTITY_NORMAL,
                     packedLight, packedOverlay, red, green, blue, alpha, false, false, uvTransform);
@@ -5787,7 +5827,7 @@ public final class LegacyWavefrontModel {
                 throw new GpuMeshTemporarilyUnavailableException(
                         "GPU mesh upload unavailable in the current render context");
             }
-            BufferBuilder builder = new BufferBuilder(Math.max(256, vertices.size() * 16));
+            BufferBuilder builder = gpuUploadBuilderFor(Math.max(256, vertices.size() * 16));
             builder.begin(drawMode, DefaultVertexFormat.POSITION_COLOR);
             emitPreparedVerticesUntextured(vertices, builder, IDENTITY_POSITION, red, green, blue, alpha);
             BufferBuilder.RenderedBuffer renderedBuffer = builder.end();
@@ -5796,24 +5836,33 @@ public final class LegacyWavefrontModel {
         }
 
         private GpuMesh uploadVertexBuffer(BufferBuilder.RenderedBuffer renderedBuffer, long byteSize, String context) {
-            VertexBuffer vertexBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
             GlObjectDeleteGuard guard = GlObjectDeleteGuard.snapshot();
-            boolean uploaded = false;
+            VertexBuffer vertexBuffer = null;
+            boolean renderedBufferHandedOff = false;
+            boolean meshCreated = false;
             Throwable uploadFailure = null;
             try {
+                vertexBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
                 vertexBuffer.bind();
+                // VertexBuffer.upload releases RenderedBuffer in its own finally block on 1.20.1.
+                renderedBufferHandedOff = true;
                 vertexBuffer.upload(renderedBuffer);
-                uploaded = true;
                 int arrayObjectId = GL11.glGetInteger(GL30.GL_VERTEX_ARRAY_BINDING);
                 int vertexBufferId = GL11.glGetInteger(GL15.GL_ARRAY_BUFFER_BINDING);
-                return new GpuMesh(vertexBuffer, byteSize, arrayObjectId, vertexBufferId, new AtomicBoolean());
+                GpuMesh mesh = new GpuMesh(vertexBuffer, byteSize, arrayObjectId, vertexBufferId,
+                        new AtomicBoolean());
+                meshCreated = true;
+                return mesh;
             } catch (RuntimeException | Error throwable) {
                 uploadFailure = throwable;
                 throw throwable;
             } finally {
                 Throwable cleanupFailure = null;
                 cleanupFailure = GlObjectDeleteGuard.restoreStep(cleanupFailure, VertexBuffer::unbind);
-                if (!uploaded) {
+                if (!renderedBufferHandedOff) {
+                    cleanupFailure = GlObjectDeleteGuard.restoreStep(cleanupFailure, renderedBuffer::release);
+                }
+                if (!meshCreated && vertexBuffer != null) {
                     cleanupFailure = GlObjectDeleteGuard.restoreStep(cleanupFailure, vertexBuffer::close);
                 }
                 guard.restoreAfterDeleting(0);
@@ -6125,7 +6174,7 @@ public final class LegacyWavefrontModel {
             IrisCompanionMeshKey key = new IrisCompanionMeshKey(GpuMeshKind.UNTEXTURED,
                     "transient-lines", PreparedGeometryKey.fromLines(lines), null, lines.size() * 2,
                     VertexFormat.Mode.LINES, false, UvTransform.DEFAULT);
-            BufferBuilder builder = new BufferBuilder(Math.max(256, lines.size() * 112));
+            BufferBuilder builder = irisUploadBuilderFor(Math.max(256, lines.size() * 112));
             builder.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.NEW_ENTITY);
             for (UntexturedLineTransient line : lines) {
                 emitIrisLineVertex(builder, line.x0(), line.y0(), line.z0(), line.color(), line.alpha(),
@@ -6153,7 +6202,7 @@ public final class LegacyWavefrontModel {
                     "transient-vertex-color:" + detail, PreparedGeometryKey.fromVertexColors(vertices), null,
                     vertices.size(),
                     VertexFormat.Mode.TRIANGLES, false, UvTransform.DEFAULT);
-            BufferBuilder builder = new BufferBuilder(Math.max(256, vertices.size() * 56));
+            BufferBuilder builder = irisUploadBuilderFor(Math.max(256, vertices.size() * 56));
             builder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.NEW_ENTITY);
             float[] normal = new float[3];
             for (int index = 0; index < vertices.size(); index += 3) {
@@ -6225,7 +6274,7 @@ public final class LegacyWavefrontModel {
             if (triangleVertices.isEmpty()) {
                 throw new IllegalStateException("No vertices for Iris companion mesh");
             }
-            BufferBuilder builder = new BufferBuilder(Math.max(256, triangleVertices.size() * 56));
+            BufferBuilder builder = irisUploadBuilderFor(Math.max(256, triangleVertices.size() * 56));
             builder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.NEW_ENTITY);
             if (key.kind() == GpuMeshKind.UNTEXTURED) {
                 emitPreparedVertices(triangleVertices, builder, IDENTITY_POSITION, IDENTITY_NORMAL,
@@ -6293,8 +6342,18 @@ public final class LegacyWavefrontModel {
                 }
                 throw exception;
             } finally {
-                GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, previousArrayBuffer);
-                HbmGlVaoSafety.bindVertexArray(previousVao);
+                Throwable cleanupFailure = null;
+                // This path reads RenderedBuffer directly instead of calling VertexBuffer.upload,
+                // so it must release the reusable builder batch itself after glBufferData copied it.
+                cleanupFailure = GlObjectDeleteGuard.restoreStep(cleanupFailure, renderedBuffer::release);
+                cleanupFailure = GlObjectDeleteGuard.restoreStep(cleanupFailure,
+                        () -> GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, previousArrayBuffer));
+                cleanupFailure = GlObjectDeleteGuard.restoreStep(cleanupFailure,
+                        () -> HbmGlVaoSafety.bindVertexArray(previousVao));
+                if (cleanupFailure != null) {
+                    HbmNtm.LOGGER.error("Legacy OBJ Iris companion rendered buffer/state cleanup failed",
+                            cleanupFailure);
+                }
             }
         }
 

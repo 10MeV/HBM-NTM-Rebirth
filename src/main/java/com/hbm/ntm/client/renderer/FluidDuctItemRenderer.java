@@ -3,8 +3,10 @@ package com.hbm.ntm.client.renderer;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.block.FluidDuctBoxBlock;
 import com.hbm.ntm.block.FluidDuctExhaustBlock;
+import com.hbm.ntm.block.FluidDuctPaintableExhaustBlock;
 import com.hbm.ntm.client.obj.LegacyAtlasCuboidRenderer;
 import com.hbm.ntm.client.obj.LegacyTexturedQuadRenderer;
+import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
 import com.hbm.ntm.client.obj.ObjBlockModels;
 import com.hbm.ntm.fluid.HbmFluidDuctVariants;
@@ -50,7 +52,8 @@ public class FluidDuctItemRenderer extends BlockEntityWithoutLevelRenderer {
         }
         if (stack.getItem() instanceof FluidDuctVariantBlockItem ductItem) {
             boolean exhaust = stack.getItem() instanceof BlockItem blockItem
-                    && blockItem.getBlock() instanceof FluidDuctExhaustBlock;
+                    && (blockItem.getBlock() instanceof FluidDuctExhaustBlock
+                    || blockItem.getBlock() instanceof FluidDuctPaintableExhaustBlock);
             renderBoxDuctItem(ductItem.getLegacyMetadata(stack), exhaust, displayContext, poseStack, buffer,
                     packedLight, packedOverlay);
         }
@@ -64,10 +67,12 @@ public class FluidDuctItemRenderer extends BlockEntityWithoutLevelRenderer {
         applyCenteredDisplay(displayContext, poseStack);
         poseStack.scale(1.25F, 1.25F, 1.25F);
         ObjBlockModels.PIPE_NEO.renderOnlyInCallOrder(PIPE_BASE_TEXTURE_LOCATIONS[clampedStyle], poseStack, buffer,
-                packedLight, packedOverlay, PIPE_INVENTORY_HANDLE);
+                packedLight, packedOverlay, PIPE_INVENTORY_HANDLE, LegacyTexturedRenderMode.CUTOUT_CULL);
         ObjBlockModels.PIPE_NEO.renderOnlyInCallOrder(PIPE_OVERLAY_TEXTURE_LOCATIONS[clampedStyle],
                 poseStack, buffer, packedLight, packedOverlay,
-                color >> 16 & 255, color >> 8 & 255, color & 255, 255, false, PIPE_INVENTORY_HANDLE);
+                color >> 16 & 255, color >> 8 & 255, color & 255, 255, false,
+                LegacyTexturedRenderMode.CUTOUT_CULL, LegacyWavefrontModel.UvTransform.DEFAULT,
+                PIPE_INVENTORY_HANDLE);
         poseStack.popPose();
     }
 
@@ -82,7 +87,8 @@ public class FluidDuctItemRenderer extends BlockEntityWithoutLevelRenderer {
         applyBlockDisplay(displayContext, poseStack);
         LegacyAtlasCuboidRenderer.croppedCuboid(textures.straight(), textures.straight(), textures.end(),
                 textures.end(), textures.straight(), textures.straight(),
-                poseStack, buffer, packedLight, packedOverlay, bounds.lower(), bounds.lower(), 0.0D,
+                poseStack, buffer, packedLight, packedOverlay, 0xFFFFFF, 255,
+                LegacyTexturedRenderMode.CUTOUT_NO_CULL, bounds.lower(), bounds.lower(), 0.0D,
                 bounds.upper(), bounds.upper(), 1.0D);
         poseStack.popPose();
     }

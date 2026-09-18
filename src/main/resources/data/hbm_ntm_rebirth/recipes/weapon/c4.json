@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "key": {
+    "D": {
+      "item": "hbm_ntm_rebirth:stick_c4"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:safety_fuse"
+    }
+  },
+  "pattern": [
+    "DDD",
+    "DSD",
+    "DDD"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:c4"
+  },
+  "show_notification": true
+}

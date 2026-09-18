@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:plates/titanium" }, "count": 4, "legacy_ore": "plateTitanium" },
+  "output": { "item": "hbm_ntm_rebirth:shell_titanium" },
+  "tier_lower": 1
+}

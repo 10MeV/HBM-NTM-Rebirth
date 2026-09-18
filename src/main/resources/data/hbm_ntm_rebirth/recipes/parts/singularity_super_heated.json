@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {
+      "tag": "forge:plates/saturnite"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:singularity"
+    },
+    "T": {
+      "item": "hbm_ntm_rebirth:powder_power"
+    }
+  },
+  "pattern": [
+    "CTC",
+    "TST",
+    "CTC"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:singularity_super_heated"
+  },
+  "show_notification": true
+}

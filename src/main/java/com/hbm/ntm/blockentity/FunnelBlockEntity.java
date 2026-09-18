@@ -321,9 +321,11 @@ public class FunnelBlockEntity extends BlockEntity implements MenuProvider, HbmL
             if (side == Direction.DOWN && mapped >= SLOT_OUTPUT_START) {
                 return items.extractItem(mapped, amount, simulate);
             }
-            if (side != Direction.UP && mapped <= SLOT_INPUT_END) {
-                return items.extractItem(mapped, amount, simulate);
-            }
+            // Inputs are an insertion surface only.  The previous horizontal
+            // branch made every side-facing funnel expose its raw input grid
+            // to extraction-capable pipes, which could drain ingredients
+            // before compression.  Output extraction is reserved for the
+            // legacy bottom side above.
             return ItemStack.EMPTY;
         }
 

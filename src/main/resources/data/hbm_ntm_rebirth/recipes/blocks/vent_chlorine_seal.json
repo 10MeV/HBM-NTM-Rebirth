@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "I": { "tag": "forge:ingots/saturnite" },
+    "S": { "tag": "forge:ingots/starmetal" },
+    "C": { "item": "hbm_ntm_rebirth:chlorine_pinwheel" }
+  },
+  "pattern": ["ISI", "SCS", "ISI"],
+  "result": { "item": "hbm_ntm_rebirth:vent_chlorine_seal" },
+  "show_notification": true
+}

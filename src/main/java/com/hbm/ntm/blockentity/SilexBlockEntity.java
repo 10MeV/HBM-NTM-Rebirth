@@ -156,8 +156,7 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
     }
 
     public boolean acceptLaser(Direction felFacing, LaserWavelength wavelength) {
-        Direction facing = getBlockState().getValue(HorizontalMachineBlock.FACING);
-        if (facing != felFacing && facing != felFacing.getOpposite()) {
+        if (!canAcceptLaserFrom(felFacing)) {
             return false;
         }
         if (mode != wavelength) {
@@ -165,6 +164,11 @@ public class SilexBlockEntity extends HbmFluidNetworkBlockEntity
             setChanged();
         }
         return true;
+    }
+
+    public boolean canAcceptLaserFrom(Direction felFacing) {
+        Direction facing = getBlockState().getValue(HorizontalMachineBlock.FACING);
+        return facing == felFacing || facing == felFacing.getOpposite();
     }
 
     private void loadFluidSource() {

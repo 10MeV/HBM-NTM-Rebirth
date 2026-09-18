@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "pattern": [" T ", "GHG", "CCC"],
+  "key": {
+    "T": { "tag": "forge:ingots/any_plastic_explosive" },
+    "G": { "item": "hbm_ntm_rebirth:ballistite" },
+    "H": { "tag": "forge:shells/steel" },
+    "C": { "tag": "forge:ingots/copper" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:ammo_shell_explosive", "count": 4 },
+  "show_notification": true
+}

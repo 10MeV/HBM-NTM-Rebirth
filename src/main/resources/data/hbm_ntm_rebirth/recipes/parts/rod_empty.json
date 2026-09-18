@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "S": { "tag": "forge:plates/steel" },
+    "L": { "tag": "forge:plates/lead" }
+  },
+  "pattern": ["SSS", "L L", "SSS"],
+  "result": { "item": "hbm_ntm_rebirth:rod_empty", "count": 16 },
+  "show_notification": true
+}

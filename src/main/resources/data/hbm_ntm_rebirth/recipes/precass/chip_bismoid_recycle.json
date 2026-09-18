@@ -1,0 +1,50 @@
+{
+  "type": "hbm_ntm_rebirth:precass",
+  "duration": 200,
+  "icon": {
+    "item": "hbm_ntm_rebirth:broken_item",
+    "nbt": "{itemID:\"hbm_ntm_rebirth:circuit_chip_bismoid\",itemMeta:0}"
+  },
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:broken_item"
+      },
+      "partial_nbt": "{itemID:\"hbm_ntm_rebirth:circuit_chip_bismoid\",itemMeta:0}"
+    }
+  ],
+  "internal_name": "precass.chip_bismoid.recycle",
+  "name_wrapper": "precass.recycle",
+  "output_fluids": [
+    {
+      "amount": 375,
+      "fluid": "hbm_ntm_rebirth:perfluoromethyl"
+    }
+  ],
+  "output_items": [
+    {
+      "chance": 0.75,
+      "count": 4,
+      "item": "hbm_ntm_rebirth:circuit_silicon"
+    },
+    {
+      "chance": 0.75,
+      "count": 8,
+      "item": "hbm_ntm_rebirth:plate_polymer"
+    },
+    {
+      "chance": 0.75,
+      "count": 2,
+      "item": "hbm_ntm_rebirth:nugget_bismuth"
+    },
+    {
+      "chance": 0.75,
+      "count": 4,
+      "item": "hbm_ntm_rebirth:wire_gold"
+    }
+  ],
+  "pools": [],
+  "power": 1000
+}

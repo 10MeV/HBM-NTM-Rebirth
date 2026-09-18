@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building_blocks",
+  "key": { "C": { "item": "hbm_ntm_rebirth:tile_lab" } },
+  "pattern": [" C ", "C C", " C "],
+  "result": { "item": "hbm_ntm_rebirth:tile_lab_cracked", "count": 6 },
+  "show_notification": true
+}

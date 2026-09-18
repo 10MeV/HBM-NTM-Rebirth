@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "food",
+  "ingredients": [
+    { "tag": "forge:ingots/any_rubber" },
+    { "item": "minecraft:wheat" },
+    { "item": "minecraft:rotten_flesh" },
+    { "item": "minecraft:wheat_seeds" },
+    { "item": "minecraft:wheat_seeds" },
+    { "item": "minecraft:wheat_seeds" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:definitelyfood", "count": 4 }
+}

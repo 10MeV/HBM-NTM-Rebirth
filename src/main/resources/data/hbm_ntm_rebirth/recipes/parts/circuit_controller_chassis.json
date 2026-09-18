@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": { "tag": "forge:ingots/any_plastic" },
+    "C": { "item": "hbm_ntm_rebirth:crt_display" },
+    "B": { "item": "hbm_ntm_rebirth:circuit_pcb" }
+  },
+  "pattern": ["PPP", "CBB", "PPP"],
+  "result": { "item": "hbm_ntm_rebirth:circuit_controller_chassis" },
+  "show_notification": true
+}

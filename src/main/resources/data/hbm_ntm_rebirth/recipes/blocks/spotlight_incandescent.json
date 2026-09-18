@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": {
+      "tag": "forge:glass_panes"
+    },
+    "I": {
+      "tag": "forge:ingots/iron"
+    },
+    "T": {
+      "tag": "forge:wires/tungsten"
+    }
+  },
+  "pattern": [
+    "G",
+    "T",
+    "I"
+  ],
+  "result": {
+    "count": 8,
+    "item": "hbm_ntm_rebirth:spotlight_incandescent"
+  },
+  "show_notification": true
+}

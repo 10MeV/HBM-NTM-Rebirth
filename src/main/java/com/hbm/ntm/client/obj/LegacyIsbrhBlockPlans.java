@@ -2584,7 +2584,7 @@ public final class LegacyIsbrhBlockPlans {
                 new LegacyAtlasCuboidRenderer.CuboidBounds(
                         0.5D - radius, 0.5D - radius, 0.5D - radius,
                         0.5D + radius, 0.5D + radius, 0.5D + radius);
-        return new DiodeBoundsPlan(directionalBounds, padBounds, "hadron_coil_alloy", true);
+        return new DiodeBoundsPlan(directionalBounds, padBounds, "cable_diode_pad", true);
     }
 
     private static List<NamedIconPartPlan> diodeCableParts(boolean posX, boolean negX, boolean posY,

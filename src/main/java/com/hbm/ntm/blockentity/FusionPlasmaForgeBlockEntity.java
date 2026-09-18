@@ -753,8 +753,9 @@ public class FusionPlasmaForgeBlockEntity extends HbmEnergyAndFluidBlockEntity
     }
 
     private boolean canExtractExternalSlot(int slot) {
-        return slot == SLOT_OUTPUT || GenericMachineRecipeRuntime.isSlotClogged(getSelectedRecipeDefinition(),
-                GenericMachineRecipe.Machine.PLASMA_FORGE, level, items, slot, INPUT_SLOTS);
+        // Keep all ingredient slots insert-only.  A full/blocked ingredient
+        // must not become a pipe-visible extraction slot.
+        return slot == SLOT_OUTPUT;
     }
 
     private static int boosterValue(ItemStack stack) {

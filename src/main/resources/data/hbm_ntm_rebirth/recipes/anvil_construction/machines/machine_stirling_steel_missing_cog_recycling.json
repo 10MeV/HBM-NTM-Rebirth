@@ -1,0 +1,29 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:machine_stirling_steel"
+    },
+    "partial_nbt": "{persistent:{missingCog:1b}}"
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:plate_steel",
+      "count": 16
+    },
+    {
+      "item": "hbm_ntm_rebirth:ingot_beryllium",
+      "count": 6
+    },
+    {
+      "item": "minecraft:copper_ingot",
+      "count": 4
+    },
+    {
+      "item": "hbm_ntm_rebirth:coil_gold",
+      "count": 8
+    }
+  ],
+  "tier_lower": 2,
+  "overlay": "recycling"
+}

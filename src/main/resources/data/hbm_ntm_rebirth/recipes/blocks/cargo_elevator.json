@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building_blocks",
+  "key": {
+    "G": { "item": "hbm_ntm_rebirth:steel_grate" },
+    "S": { "tag": "forge:ingots/steel" },
+    "P": { "item": "hbm_ntm_rebirth:part_generic_piston_hydraulic" }
+  },
+  "pattern": ["GGG", "SPS"],
+  "result": { "item": "hbm_ntm_rebirth:cargo_elevator", "count": 3 },
+  "show_notification": true
+}

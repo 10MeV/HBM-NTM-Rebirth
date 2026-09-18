@@ -1,0 +1,78 @@
+{
+  "type": "hbm_ntm_rebirth:precass",
+  "duration": 400,
+  "input_fluids": [
+    {
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:perfluoromethyl"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 32,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_chip"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 5
+    },
+    {
+      "count": 32,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_capacitor"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 1
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_capacitor_tantalium"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 2
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_controller_chassis"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 12
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:upgrade_speed_1"
+      }
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "tag": "forge:wires/lead"
+      },
+      "legacy_ore": "wireFineLead"
+    }
+  ],
+  "internal_name": "precass.controller",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "type": "one_of",
+      "entries": [
+        {
+          "item": "hbm_ntm_rebirth:circuit_controller",
+          "weight": 75
+        },
+        {
+          "item": "hbm_ntm_rebirth:broken_item",
+          "nbt": "{itemID:\"hbm_ntm_rebirth:circuit_controller\",itemMeta:0}",
+          "weight": 25
+        }
+      ]
+    }
+  ],
+  "pools": [],
+  "power": 15000,
+  "source_order": 6
+}

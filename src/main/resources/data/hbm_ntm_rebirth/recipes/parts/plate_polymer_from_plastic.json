@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": { "P": { "tag": "forge:ingots/any_plastic" } },
+  "pattern": ["PP"],
+  "result": { "item": "hbm_ntm_rebirth:plate_polymer", "count": 8 },
+  "show_notification": true
+}

@@ -38,9 +38,6 @@ public class SatelliteLinkerBlockEntity extends BlockEntity implements MenuProvi
 
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_CUSTOM_NAME = "name";
-    private static final int[] SLOTS_TOP = new int[] { SLOT_SOURCE };
-    private static final int[] SLOTS_BOTTOM = new int[] { SLOT_TARGET };
-    private static final int[] SLOTS_SIDE = new int[] { SLOT_RANDOMIZE };
     private static final int[] SLOTS_ALL = new int[] { SLOT_SOURCE, SLOT_TARGET, SLOT_RANDOMIZE };
 
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
@@ -59,12 +56,6 @@ public class SatelliteLinkerBlockEntity extends BlockEntity implements MenuProvi
     };
     private final LazyOptional<IItemHandler> itemHandler =
             LazyOptional.of(() -> new ExtractOnlySidedItemHandler(items, SLOTS_ALL));
-    private final LazyOptional<IItemHandler> topItemHandler =
-            LazyOptional.of(() -> new ExtractOnlySidedItemHandler(items, SLOTS_TOP));
-    private final LazyOptional<IItemHandler> bottomItemHandler =
-            LazyOptional.of(() -> new ExtractOnlySidedItemHandler(items, SLOTS_BOTTOM));
-    private final LazyOptional<IItemHandler> sideItemHandler =
-            LazyOptional.of(() -> new ExtractOnlySidedItemHandler(items, SLOTS_SIDE));
     private String customName;
 
     public SatelliteLinkerBlockEntity(BlockPos pos, BlockState state) {
@@ -166,30 +157,18 @@ public class SatelliteLinkerBlockEntity extends BlockEntity implements MenuProvi
     public void invalidateCaps() {
         super.invalidateCaps();
         itemHandler.invalidate();
-        topItemHandler.invalidate();
-        bottomItemHandler.invalidate();
-        sideItemHandler.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return getItemHandler(side).cast();
+            // The three chip slots are all machine inputs/state, not product
+            // slots.  Keep the complete view for menus/internal code, but do
+            // not publish any physical-side item capability that a hopper or
+            // another mod could use to pull chips out.
+            return side == null ? itemHandler.cast() : LazyOptional.empty();
         }
         return super.getCapability(capability, side);
-    }
-
-    private LazyOptional<IItemHandler> getItemHandler(@Nullable Direction side) {
-        if (side == null) {
-            return itemHandler;
-        }
-        if (side == Direction.UP) {
-            return topItemHandler;
-        }
-        if (side == Direction.DOWN) {
-            return bottomItemHandler;
-        }
-        return sideItemHandler;
     }
 
     private static final class ExtractOnlySidedItemHandler implements IItemHandler {

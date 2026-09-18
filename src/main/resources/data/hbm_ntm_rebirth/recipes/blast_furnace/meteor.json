@@ -1,0 +1,27 @@
+{
+  "type": "hbm_ntm_rebirth:blast_furnace",
+  "duration": 600,
+  "inputs": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:ingots/cobalt"
+      },
+      "legacy_ore": "ingotCobalt"
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:powder_meteorite"
+      },
+      "legacy_item": "powder_meteorite"
+    }
+  ],
+  "name": "blast.meteor",
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:ingot_meteorite"
+    }
+  ],
+  "source_order": 10
+}

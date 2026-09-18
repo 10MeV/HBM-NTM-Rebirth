@@ -1,0 +1,29 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:filing_cabinet"
+    }
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:plate_steel",
+      "count": 2
+    },
+    {
+      "item": "hbm_ntm_rebirth:plate_steel",
+      "count": 2,
+      "chance": 0.5
+    },
+    {
+      "item": "hbm_ntm_rebirth:plate_polymer",
+      "count": 2,
+      "chance": 0.25
+    },
+    {
+      "item": "hbm_ntm_rebirth:scrap"
+    }
+  ],
+  "tier_lower": 1,
+  "overlay": "recycling"
+}

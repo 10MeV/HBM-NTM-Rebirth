@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [" G ", "IPI", " C "],
+  "key": {
+    "G": { "tag": "forge:glass_panes" },
+    "I": { "item": "hbm_ntm_rebirth:plate_polymer" },
+    "P": { "tag": "forge:billets/silicon" },
+    "C": { "tag": "forge:circuits/pcb" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:photo_panel" }
+}

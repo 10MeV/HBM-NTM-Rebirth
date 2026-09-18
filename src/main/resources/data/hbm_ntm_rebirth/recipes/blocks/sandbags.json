@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building_blocks",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:plate_polymer" },
+    { "tag": "forge:sand" },
+    { "tag": "forge:sand" },
+    { "tag": "forge:sand" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:sandbags", "count": 4 }
+}

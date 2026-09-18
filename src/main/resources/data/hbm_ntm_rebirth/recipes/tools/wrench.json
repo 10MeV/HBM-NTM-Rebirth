@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "tools",
+  "pattern": [" S ", " IS", "I  "],
+  "key": {
+    "S": { "tag": "forge:ingots/steel" },
+    "I": { "tag": "forge:ingots/iron" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:wrench" }
+}

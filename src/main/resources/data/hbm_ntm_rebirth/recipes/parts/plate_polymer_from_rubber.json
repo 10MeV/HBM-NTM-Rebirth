@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": { "R": { "tag": "forge:ingots/any_rubber" } },
+  "pattern": ["RR"],
+  "result": { "item": "hbm_ntm_rebirth:plate_polymer", "count": 8 },
+  "show_notification": true
+}

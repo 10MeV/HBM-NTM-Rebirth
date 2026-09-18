@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": { "A": { "tag": "forge:ingots/asbestos" } },
+  "pattern": ["AA"],
+  "result": { "item": "hbm_ntm_rebirth:plate_polymer", "count": 16 },
+  "show_notification": true
+}

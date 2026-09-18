@@ -1,0 +1,22 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:stamp_desh_flat"
+      }
+    },
+    {
+      "ingredient": {
+        "tag": "forge:ingots/weapon_steel"
+      },
+      "count": 4,
+      "legacy_ore": "ingotWeaponSteel"
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:stamp_desh_50"
+  },
+  "tier_lower": 4,
+  "overlay": "construction"
+}

@@ -80,7 +80,6 @@ import com.hbm.ntm.block.CrucibleBlock;
 import com.hbm.ntm.block.CustomMissileLauncherBlock;
 import com.hbm.ntm.block.CustomNukeBlock;
 import com.hbm.ntm.block.CyclotronBlock;
-import com.hbm.ntm.block.HadronCoilBlock;
 import com.hbm.ntm.block.DecoCrtBlock;
 import com.hbm.ntm.block.DecoComputerBlock;
 import com.hbm.ntm.block.LegacyBiomeStoneBlock;
@@ -123,7 +122,6 @@ import com.hbm.ntm.block.LandmineBlock;
 import com.hbm.ntm.block.LegacyDetCordBlock;
 import com.hbm.ntm.block.LegacyExplosiveChargeBlock;
 import com.hbm.ntm.block.LegacyFurnaceBlock;
-import com.hbm.ntm.block.LegacyFanBlock;
 import com.hbm.ntm.block.NavalMineBlock;
 import com.hbm.ntm.block.ThermoBombBlock;
 import com.hbm.ntm.block.DigammaFlameBlock;
@@ -406,7 +404,6 @@ import com.hbm.ntm.item.LegacyDemonLampBlockItem;
 import com.hbm.ntm.item.LandmineBlockItem;
 import com.hbm.ntm.item.LegacyDetCordBlockItem;
 import com.hbm.ntm.item.LegacyFileCabinetBlockItem;
-import com.hbm.ntm.item.LegacyFanBlockItem;
 import com.hbm.ntm.item.LegacyFloodlightBlockItem;
 import com.hbm.ntm.item.LegacyLanternBlockItem;
 import com.hbm.ntm.item.LegacyLoreBlockItem;
@@ -586,8 +583,6 @@ public final class ModBlocks {
     public static final RegistryObject<Block> MACHINE_LARGE_TURBINE = legacyLargeTurbineMachine(
             "machine_large_turbine", legacyLargeTurbineDefinition());
     public static final RegistryObject<Block> MACHINE_CONDENSER = condenserMachine("machine_condenser");
-    // 1.7.10 ModBlocks.fan: standalone redstone/entity fan, not machine_turbofan.
-    public static final RegistryObject<Block> FAN = fanMachine("fan");
     public static final RegistryObject<Block> DECON = decon("decon");
     public static final RegistryObject<Block> MACHINE_ARMOR_TABLE = armorTable("machine_armor_table");
     public static final RegistryObject<Block> MACHINE_WEAPON_TABLE = weaponTable("machine_weapon_table");
@@ -1277,15 +1272,6 @@ public final class ModBlocks {
             silexDefinition());
     public static final RegistryObject<Block> MACHINE_EXPOSURE_CHAMBER = exposureChamberMachine("machine_exposure_chamber",
             exposureChamberDefinition());
-    public static final RegistryObject<Block> HADRON_COIL_ALLOY = hadronCoil("hadron_coil_alloy", 10);
-    public static final RegistryObject<Block> HADRON_COIL_GOLD = hadronCoil("hadron_coil_gold", 25);
-    public static final RegistryObject<Block> HADRON_COIL_NEODYMIUM = hadronCoil("hadron_coil_neodymium", 50);
-    public static final RegistryObject<Block> HADRON_COIL_MAGTUNG = hadronCoil("hadron_coil_magtung", 100);
-    public static final RegistryObject<Block> HADRON_COIL_SCHRABIDIUM = hadronCoil("hadron_coil_schrabidium", 250);
-    public static final RegistryObject<Block> HADRON_COIL_SCHRABIDATE = hadronCoil("hadron_coil_schrabidate", 500);
-    public static final RegistryObject<Block> HADRON_COIL_STARMETAL = hadronCoil("hadron_coil_starmetal", 1_000);
-    public static final RegistryObject<Block> HADRON_COIL_CHLOROPHYTE = hadronCoil("hadron_coil_chlorophyte", 2_500);
-    public static final RegistryObject<Block> HADRON_COIL_MESE = hadronCoil("hadron_coil_mese", 10_000);
     public static final RegistryObject<Block> MACHINE_CYCLOTRON = cyclotronMachine("machine_cyclotron",
             cyclotronDefinition());
     public static final RegistryObject<Block> MACHINE_CRYSTALLIZER = crystallizerMachine("machine_crystallizer",
@@ -1924,22 +1910,12 @@ public final class ModBlocks {
             HEATER_OILBURNER,
             HEATER_ELECTRIC,
             MACHINE_CONDENSER,
-            FAN,
             MACHINE_CONDENSER_POWERED,
             MACHINE_ASSEMBLY_FACTORY,
             MACHINE_PRECASS,
             MACHINE_PUREX,
             MACHINE_SILEX,
             MACHINE_EXPOSURE_CHAMBER,
-            HADRON_COIL_ALLOY,
-            HADRON_COIL_GOLD,
-            HADRON_COIL_NEODYMIUM,
-            HADRON_COIL_MAGTUNG,
-            HADRON_COIL_SCHRABIDIUM,
-            HADRON_COIL_SCHRABIDATE,
-            HADRON_COIL_STARMETAL,
-            HADRON_COIL_CHLOROPHYTE,
-            HADRON_COIL_MESE,
             MACHINE_CYCLOTRON,
             PA_SOURCE,
             PA_BEAMLINE,
@@ -3027,15 +3003,6 @@ public final class ModBlocks {
     private static RegistryObject<Block> radioTorchSender(String name) {
         return registerBlockWithItem(name, () -> new RadioTorchSenderBlock(radioTorchProperties()),
                 block -> new RadioTorchBlockItem(block.get(), new Item.Properties()));
-    }
-
-    private static RegistryObject<Block> fanMachine(String name) {
-        return registerBlockWithItem(name, () -> new LegacyFanBlock(BlockBehaviour.Properties.of()
-                .mapColor(MapColor.METAL)
-                .strength(5.0F, 10.0F)
-                .sound(SoundType.METAL)
-                .requiresCorrectToolForDrops()
-                .noOcclusion()), block -> new LegacyFanBlockItem(block.get(), new Item.Properties()));
     }
 
     /**
@@ -4943,7 +4910,8 @@ public final class ModBlocks {
                 .strength(5.0F, 10.0F)
                 .sound(SoundType.METAL)
                 .requiresCorrectToolForDrops()
-                .noOcclusion()));
+                .noOcclusion()),
+                block -> new ObjMachineBlockItem(block.get(), new Item.Properties()));
     }
 
     private static RegistryObject<Block> coolingTowerMachine(String name, LegacyMachineDefinition definition,
@@ -7745,17 +7713,6 @@ public final class ModBlocks {
                         .requiresCorrectToolForDrops()
                         .noOcclusion(), definition),
                 block -> new MultiblockBlockItem(block.get(), new Item.Properties()));
-    }
-
-    private static RegistryObject<Block> hadronCoil(String name, int factor) {
-        RegistryObject<Block> block = BLOCKS.register(name, () -> new HadronCoilBlock(BlockBehaviour.Properties.of()
-                .mapColor(MapColor.METAL)
-                .strength(5.0F, 10.0F)
-                .sound(SoundType.METAL)
-                .requiresCorrectToolForDrops(), factor));
-        ModItems.registerBlockItem(name, () -> new BlockItem(block.get(), new Item.Properties()));
-        BLOCKS_BY_LEGACY_NAME.put(name, block);
-        return block;
     }
 
     private static RegistryObject<Block> industrialGeneratorMachine(String name, LegacyMachineDefinition definition) {

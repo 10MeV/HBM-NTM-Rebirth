@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:singularity"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:crystal_xen"
+    }
+  },
+  "pattern": [
+    "SSS",
+    "SCS",
+    "SSS"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:black_hole"
+  },
+  "show_notification": true
+}

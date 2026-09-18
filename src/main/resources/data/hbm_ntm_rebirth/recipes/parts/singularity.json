@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": {
+      "tag": "forge:storage_blocks/schrabidium"
+    },
+    "E": {
+      "tag": "forge:nuggets/euphemium"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:cell_anti_schrabidium"
+    }
+  },
+  "pattern": [
+    "ESE",
+    "SBS",
+    "ESE"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:singularity"
+  },
+  "show_notification": true
+}

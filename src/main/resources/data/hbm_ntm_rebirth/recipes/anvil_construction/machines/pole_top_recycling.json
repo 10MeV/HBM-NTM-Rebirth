@@ -1,0 +1,28 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:pole_top"
+    }
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:ingot_tungsten",
+      "count": 3
+    },
+    {
+      "item": "hbm_ntm_rebirth:ingot_red_copper"
+    },
+    {
+      "item": "hbm_ntm_rebirth:ingot_beryllium",
+      "count": 2
+    },
+    {
+      "item": "hbm_ntm_rebirth:ingot_beryllium",
+      "count": 1,
+      "chance": 0.5
+    }
+  ],
+  "tier_lower": 2,
+  "overlay": "recycling"
+}

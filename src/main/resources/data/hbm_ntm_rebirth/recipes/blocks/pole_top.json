@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": ["T T", "TRT", "BBB"],
+  "key": {
+    "T": { "tag": "forge:ingots/tungsten" },
+    "R": { "tag": "forge:ingots/mingrade" },
+    "B": { "tag": "forge:ingots/beryllium" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:pole_top", "count": 1 }
+}

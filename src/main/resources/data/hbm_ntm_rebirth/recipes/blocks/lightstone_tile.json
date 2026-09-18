@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": ["XX", "XX"],
+  "key": {
+    "X": {
+      "type": "forge:nbt",
+      "item": "hbm_ntm_rebirth:lightstone",
+      "nbt": "{hbmLegacyVariant:0}"
+    }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:lightstone",
+    "count": 4,
+    "nbt": "{hbmLegacyVariant:1}"
+  }
+}

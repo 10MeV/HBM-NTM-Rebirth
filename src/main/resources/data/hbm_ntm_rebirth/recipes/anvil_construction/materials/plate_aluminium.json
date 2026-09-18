@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:ingots/aluminium" }, "legacy_ore": "ingotAluminium" },
+  "output": { "item": "hbm_ntm_rebirth:plate_aluminium" },
+  "tier_lower": 3
+}

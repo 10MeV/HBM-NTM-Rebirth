@@ -285,6 +285,13 @@ public final class HbmItemOutput {
         }
 
         ItemStack stack = new ItemStack(item, count);
+        if (object.has("damage")) {
+            int damage = GsonHelper.getAsInt(object, "damage");
+            if (damage < 0) {
+                throw new JsonSyntaxException("Invalid item damage " + damage + " in " + name);
+            }
+            stack.setDamageValue(damage);
+        }
         if (object.has("nbt")) {
             try {
                 CompoundTag tag = TagParser.parseTag(GsonHelper.getAsString(object, "nbt"));
@@ -301,6 +308,9 @@ public final class HbmItemOutput {
         object.addProperty("item", HbmRegistryUtil.itemKey(stack.getItem()).toString());
         if (stack.getCount() > 1) {
             object.addProperty("count", stack.getCount());
+        }
+        if (stack.getDamageValue() != 0) {
+            object.addProperty("damage", stack.getDamageValue());
         }
         if (stack.hasTag() && !stack.getTag().isEmpty()) {
             object.addProperty("nbt", stack.getTag().toString());

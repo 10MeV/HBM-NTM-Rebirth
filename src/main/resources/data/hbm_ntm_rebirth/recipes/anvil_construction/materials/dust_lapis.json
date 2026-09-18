@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:dusts/lapis" }, "legacy_ore": "dustLapis" },
+  "output": { "item": "minecraft:lapis_lazuli" },
+  "tier_lower": 3
+}

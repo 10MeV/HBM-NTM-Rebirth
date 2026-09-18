@@ -1,0 +1,59 @@
+{
+  "type": "hbm_ntm_rebirth:precass",
+  "duration": 600,
+  "icon": {
+    "item": "hbm_ntm_rebirth:broken_item",
+    "nbt": "{itemID:\"hbm_ntm_rebirth:circuit_controller_quantum\",itemMeta:0}"
+  },
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:broken_item"
+      },
+      "partial_nbt": "{itemID:\"hbm_ntm_rebirth:circuit_controller_quantum\",itemMeta:0}"
+    }
+  ],
+  "internal_name": "precass.controller_quantum.recycle",
+  "name_wrapper": "precass.recycle",
+  "output_fluids": [
+    {
+      "amount": 4500,
+      "fluid": "hbm_ntm_rebirth:perfluoromethyl_cold"
+    }
+  ],
+  "output_items": [
+    {
+      "chance": 0.75,
+      "count": 16,
+      "item": "hbm_ntm_rebirth:circuit_chip_quantum"
+    },
+    {
+      "chance": 0.75,
+      "count": 48,
+      "item": "hbm_ntm_rebirth:circuit_chip_bismoid"
+    },
+    {
+      "chance": 0.75,
+      "count": 8,
+      "item": "hbm_ntm_rebirth:circuit_atomic_clock"
+    },
+    {
+      "chance": 0.75,
+      "count": 2,
+      "item": "hbm_ntm_rebirth:circuit_controller_advanced"
+    },
+    {
+      "chance": 0.75,
+      "item": "hbm_ntm_rebirth:upgrade_overdrive_1"
+    },
+    {
+      "chance": 0.75,
+      "count": 32,
+      "item": "hbm_ntm_rebirth:wire_fine_lead"
+    }
+  ],
+  "pools": [],
+  "power": 250000
+}

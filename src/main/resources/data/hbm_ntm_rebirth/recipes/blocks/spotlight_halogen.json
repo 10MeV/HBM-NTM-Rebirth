@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": {
+      "tag": "forge:dusts/bromine"
+    },
+    "G": {
+      "tag": "forge:glass_panes"
+    },
+    "S": {
+      "tag": "forge:plates/steel"
+    }
+  },
+  "pattern": [
+    "G",
+    "B",
+    "S"
+  ],
+  "result": {
+    "count": 8,
+    "item": "hbm_ntm_rebirth:spotlight_halogen"
+  },
+  "show_notification": true
+}

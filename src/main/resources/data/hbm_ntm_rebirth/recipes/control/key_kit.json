@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": {
+      "item": "hbm_ntm_rebirth:powder_desh"
+    },
+    "K": {
+      "item": "hbm_ntm_rebirth:key"
+    },
+    "P": {
+      "tag": "forge:plates/gold"
+    },
+    "T": {
+      "tag": "forge:tools/screwdrivers"
+    }
+  },
+  "pattern": [
+    "PKP",
+    "DTD",
+    "PKP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:key_kit"
+  },
+  "show_notification": true
+}

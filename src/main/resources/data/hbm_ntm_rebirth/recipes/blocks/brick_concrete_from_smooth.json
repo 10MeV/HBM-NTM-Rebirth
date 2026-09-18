@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [" C ", "CBC", " C "],
+  "key": {
+    "C": { "item": "hbm_ntm_rebirth:concrete_smooth" },
+    "B": { "item": "minecraft:clay_ball" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:brick_concrete", "count": 4 }
+}

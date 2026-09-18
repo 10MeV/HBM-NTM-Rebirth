@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["WWW", "WIW", "WWW"],
+  "key": {
+    "W": { "tag": "forge:wires/gold" },
+    "I": { "tag": "forge:ingots/iron" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:coil_gold" }
+}

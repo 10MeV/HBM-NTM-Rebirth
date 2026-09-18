@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": {
+      "tag": "forge:billets/zirconium"
+    },
+    "count": 3,
+    "legacy_ore": "billetZirconium"
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:pile_rod",
+      "count": 1,
+      "damage": 2
+    }
+  ],
+  "tier_lower": 2,
+  "overlay": "recycling"
+}

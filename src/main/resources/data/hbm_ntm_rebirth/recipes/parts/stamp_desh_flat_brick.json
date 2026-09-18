@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["BDB", "DSD", "BDB"],
+  "key": {
+    "B": { "item": "minecraft:brick" },
+    "D": { "tag": "forge:ingots/desh" },
+    "S": { "tag": "forge:ingots/ferrouranium" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:stamp_desh_flat" }
+}

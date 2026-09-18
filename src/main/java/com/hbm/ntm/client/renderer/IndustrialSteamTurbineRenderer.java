@@ -31,7 +31,8 @@ public class IndustrialSteamTurbineRenderer implements BlockEntityRenderer<Indus
 
     @Override
     public boolean shouldRenderOffScreen(IndustrialSteamTurbineBlockEntity blockEntity) {
-        return false;
+        // Gauge/Flywheel are BER parts outside the core block's vanilla render bounds.
+        return true;
     }
 
     @Override

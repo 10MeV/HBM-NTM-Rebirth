@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building_blocks",
+  "key": {
+    "F": { "item": "minecraft:iron_bars" },
+    "B": { "item": "minecraft:sandstone" }
+  },
+  "pattern": ["FBF", "BFB", "FBF"],
+  "result": { "item": "hbm_ntm_rebirth:reinforced_sand", "count": 4 },
+  "show_notification": true
+}

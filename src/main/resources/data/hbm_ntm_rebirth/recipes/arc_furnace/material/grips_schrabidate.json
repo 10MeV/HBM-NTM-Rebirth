@@ -1,0 +1,35 @@
+{
+  "type": "hbm_ntm_rebirth:arc_furnace",
+  "arc_material_outputs": [
+    {
+      "amount": 144,
+      "material": "Schrabidate"
+    }
+  ],
+  "conditions": [
+    {
+      "type": "forge:not",
+      "value": {
+        "type": "forge:tag_empty",
+        "tag": "forge:grips/schrabidate"
+      }
+    }
+  ],
+  "duration": 400,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "tag": "forge:grips/schrabidate"
+      },
+      "legacy_ore": "gripSchrabidate"
+    }
+  ],
+  "internal_name": "arc.autogen.gripSchrabidate",
+  "output_fluids": [],
+  "output_items": [],
+  "pools": [],
+  "power": 1000,
+  "source_order": 2214
+}

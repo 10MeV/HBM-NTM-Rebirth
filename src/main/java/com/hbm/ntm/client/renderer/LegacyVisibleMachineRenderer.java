@@ -320,7 +320,11 @@ public class LegacyVisibleMachineRenderer<T extends BlockEntity> implements Bloc
 
     @Override
     public boolean shouldRenderOffScreen(T blockEntity) {
-        return HbmShaderCompatibilityDetector.shouldRenderBlockEntityOffScreen();
+        // FEL owns a beam that can remain in the frustum after the core's render
+        // section leaves it. Keep that BE in the global submission set; render()
+        // still applies its finite beam bounds and the shared 512-block cutoff.
+        return blockEntity instanceof FelBlockEntity
+                || HbmShaderCompatibilityDetector.shouldRenderBlockEntityOffScreen();
     }
 
     @Override

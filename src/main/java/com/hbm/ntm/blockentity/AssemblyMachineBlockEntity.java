@@ -751,16 +751,12 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     }
 
     private boolean canExtractExternalSlot(int slot) {
-        return slot == SLOT_OUTPUT || isCloggedInputSlot(slot);
-    }
-
-    private boolean isCloggedInputSlot(int slot) {
-        if (level == null) {
-            return false;
-        }
-        GenericMachineRecipe recipe = getSelectedRecipeDefinition();
-        return GenericMachineRecipeRuntime.isSlotClogged(
-                recipe, GenericMachineRecipe.Machine.ASSEMBLY_MACHINE, level, items, slot, INPUT_SLOTS);
+        // A Forge item capability is a physical automation surface, not a
+        // dump of the menu inventory.  In particular, a blocked input is
+        // still an input: exposing it here lets hoppers/pipes remove the
+        // machine's raw materials.  Legacy automation may insert inputs,
+        // while extraction is restricted to the actual product slot.
+        return slot == SLOT_OUTPUT;
     }
 
     private void refreshFluidPortSubscriptions() {

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "W": { "tag": "forge:wires/mingrade" },
+    "I": { "tag": "forge:ingots/iron" }
+  },
+  "pattern": ["WWW", "WIW", "WWW"],
+  "result": { "item": "hbm_ntm_rebirth:coil_copper" },
+  "show_notification": true
+}

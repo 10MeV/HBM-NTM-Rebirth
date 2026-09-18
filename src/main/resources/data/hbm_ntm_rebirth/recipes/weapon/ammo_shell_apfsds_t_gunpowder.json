@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "pattern": [" I ", "GIG", "CCC"],
+  "key": {
+    "I": { "tag": "forge:ingots/tungsten" },
+    "G": { "item": "minecraft:gunpowder" },
+    "C": { "tag": "forge:ingots/copper" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:ammo_shell_apfsds_t", "count": 4 },
+  "show_notification": true
+}

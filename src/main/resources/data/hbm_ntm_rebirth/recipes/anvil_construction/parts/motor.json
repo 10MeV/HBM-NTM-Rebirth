@@ -1,0 +1,10 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    { "ingredient": { "tag": "forge:plates/iron" }, "count": 2, "legacy_ore": "plateIron" },
+    { "ingredient": { "item": "hbm_ntm_rebirth:coil_copper" }, "count": 1 },
+    { "ingredient": { "item": "hbm_ntm_rebirth:coil_copper_torus" }, "count": 1 }
+  ],
+  "output": { "item": "hbm_ntm_rebirth:motor", "count": 2 },
+  "tier_lower": 1
+}

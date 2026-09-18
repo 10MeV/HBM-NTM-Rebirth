@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:heater_firebox"
+    }
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:plate_steel",
+      "count": 8
+    },
+    {
+      "item": "minecraft:copper_ingot",
+      "count": 6
+    }
+  ],
+  "tier_lower": 2,
+  "overlay": "recycling"
+}

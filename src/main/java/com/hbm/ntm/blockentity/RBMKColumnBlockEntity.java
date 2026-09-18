@@ -425,6 +425,12 @@ public class RBMKColumnBlockEntity extends HbmFluidNetworkBlockEntity
 
     @Override
     public boolean hasRBMKLid() {
+        // TileEntityRBMKControl#isLidRemovable returned false, and the shared
+        // TileEntityRBMKBase#hasLid contract therefore always returned true
+        // for every manual/automatic/moderated/ReaSim control column.
+        if (kind().control()) {
+            return true;
+        }
         BlockState state = getBlockState();
         return state.getBlock() instanceof RBMKColumnBlock && state.hasProperty(RBMKColumnBlock.LID)
                 && state.getValue(RBMKColumnBlock.LID).hasLid();

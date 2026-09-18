@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "W": { "tag": "forge:wires/tungsten" },
+    "I": { "tag": "forge:ingots/iron" }
+  },
+  "pattern": ["WWW", "WIW", "WWW"],
+  "result": { "item": "hbm_ntm_rebirth:coil_tungsten" },
+  "show_notification": true
+}

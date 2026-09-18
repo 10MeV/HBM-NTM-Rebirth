@@ -50,10 +50,11 @@ public class FelScreen extends AbstractContainerScreen<FelMenu> {
         graphics.drawString(font, title, titleX, titleLabelY, 0xFFFFFF, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
         if (menu.isOn()) {
-            Component state = menu.isMissingValidSilex()
+            boolean missingCrystal = LaserWavelength.byOrdinal(menu.getModeOrdinal()) == LaserWavelength.NULL;
+            Component state = missingCrystal
                     ? Component.literal("ERR.").withStyle(ChatFormatting.RED)
                     : Component.literal("LIVE").withStyle(ChatFormatting.GREEN);
-            int stateOffset = menu.isMissingValidSilex() ? 55 : 54;
+            int stateOffset = missingCrystal ? 55 : 54;
             graphics.drawString(font, state, stateOffset + imageWidth / 2 - font.width(title) / 2,
                     9, 0xFFFFFF, false);
         }

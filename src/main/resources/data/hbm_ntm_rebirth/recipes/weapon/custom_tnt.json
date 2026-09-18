@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "tag": "forge:plates/copper"
+    },
+    "I": {
+      "tag": "forge:plates/iron"
+    },
+    "T": {
+      "tag": "forge:ingots/any_high_explosive"
+    }
+  },
+  "pattern": [
+    " C ",
+    "TIT",
+    "TIT"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:custom_tnt"
+  },
+  "show_notification": true
+}

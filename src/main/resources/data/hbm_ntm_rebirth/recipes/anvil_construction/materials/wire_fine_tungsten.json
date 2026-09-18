@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:ingots/tungsten" }, "legacy_ore": "ingotTungsten" },
+  "output": { "item": "hbm_ntm_rebirth:wire_fine_tungsten", "count": 8 },
+  "tier_lower": 4
+}

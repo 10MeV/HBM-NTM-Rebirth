@@ -26,6 +26,7 @@ import com.hbm.ntm.item.AntimatterCellItem;
 import com.hbm.ntm.item.BedrockOreBaseItem;
 import com.hbm.ntm.item.BedrockOreFragmentItem;
 import com.hbm.ntm.item.BedrockOreItem;
+import com.hbm.ntm.item.BrokenItem;
 import com.hbm.ntm.item.BjJetpackArmorItem;
 import com.hbm.ntm.item.BobmazonCatalogItem;
 import com.hbm.ntm.item.BlueprintFolderItem;
@@ -2546,6 +2547,8 @@ public final class ModItems {
             () -> new BombCallerItem(new Item.Properties(), 3));
     public static final RegistryObject<Item> BOMB_CALLER_ATOMIC = registerLegacy("bomb_caller_atomic",
             () -> new BombCallerItem(new Item.Properties(), 4));
+    public static final RegistryObject<Item> BROKEN_ITEM = registerLegacy("broken_item",
+            () -> new BrokenItem(new Item.Properties()));
     public static final RegistryObject<Item> ANCHOR_REMOTE = registerLegacy("anchor_remote",
             () -> new AnchorRemoteItem(new Item.Properties()));
     public static final RegistryObject<Item> BISMUTH_TOOL = registerLegacy("bismuth_tool",
@@ -2563,7 +2566,7 @@ public final class ModItems {
             Stream.concat(Stream.concat(Stream.concat(Stream.concat(STAMP_BOOK_ITEMS.stream(), PAGE_OF_ITEMS.stream()),
                     CIRCUIT_STAR_PIECE_ITEMS.stream()), INGOT_METAL_ITEMS.stream()), WEAPON_MOD_TEST_ITEMS.stream()),
             Stream.concat(Stream.concat(Stream.of(BLUEPRINT_FOLDER_SECRET, TEMPLATE_FOLDER, HOLOTAPE_DAMAGED, FLUID_ICON, WATCH,
-                    BURNT_BARK, APPLE_EUPHEMIUM), HOLOTAPE_IMAGE_ITEMS.stream()), CIRCUIT_STAR_COMPONENT_ITEMS.stream())).toList();
+                    BURNT_BARK, APPLE_EUPHEMIUM, BROKEN_ITEM), HOLOTAPE_IMAGE_ITEMS.stream()), CIRCUIT_STAR_COMPONENT_ITEMS.stream())).toList();
 
     public static final RegistryObject<Item> DESIGNATOR = registerLegacy("designator",
             () -> new MissileDesignatorItem(new Item.Properties().stacksTo(1), MissileDesignatorItem.Mode.BLOCK));

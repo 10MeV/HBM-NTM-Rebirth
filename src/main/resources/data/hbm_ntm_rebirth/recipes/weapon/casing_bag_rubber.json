@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "G": {
+      "tag": "forge:plates/gun_metal"
+    },
+    "L": {
+      "tag": "forge:ingots/any_rubber"
+    }
+  },
+  "pattern": [
+    " L ",
+    "LGL",
+    " L "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:casing_bag"
+  },
+  "show_notification": true
+}

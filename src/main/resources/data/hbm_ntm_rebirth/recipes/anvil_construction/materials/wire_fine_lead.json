@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:ingots/lead" }, "legacy_ore": "ingotLead" },
+  "output": { "item": "hbm_ntm_rebirth:wire_fine_lead", "count": 8 },
+  "tier_lower": 4
+}

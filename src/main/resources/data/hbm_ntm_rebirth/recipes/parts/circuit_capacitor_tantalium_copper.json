@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": { "item": "hbm_ntm_rebirth:plate_polymer" },
+    "N": { "tag": "forge:nuggets/tantalium" },
+    "W": { "tag": "forge:wires/copper" }
+  },
+  "pattern": ["I", "N", "W"],
+  "result": { "item": "hbm_ntm_rebirth:circuit_capacitor_tantalium" },
+  "show_notification": true
+}

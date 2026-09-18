@@ -137,7 +137,6 @@ import com.hbm.ntm.blockentity.LegacyEmitterBlockEntity;
 import com.hbm.ntm.blockentity.PartEmitterBlockEntity;
 import com.hbm.ntm.blockentity.LegacyFileCabinetBlockEntity;
 import com.hbm.ntm.blockentity.LegacyFurnaceBlockEntity;
-import com.hbm.ntm.blockentity.LegacyFanBlockEntity;
 import com.hbm.ntm.blockentity.LegacyGenericSelectorMachineBlockEntity;
 import com.hbm.ntm.blockentity.LegacyLanternBlockEntity;
 import com.hbm.ntm.blockentity.LanternBehemothBlockEntity;
@@ -192,7 +191,6 @@ import com.hbm.ntm.blockentity.PowerDetectorBlockEntity;
 import com.hbm.ntm.blockentity.PoweredCondenserBlockEntity;
 import com.hbm.ntm.blockentity.PoweredRedCableBlockEntity;
 import com.hbm.ntm.blockentity.ProcessingMachineBlockEntity;
-import com.hbm.ntm.blockentity.HadronCoilBlockEntity;
 import com.hbm.ntm.blockentity.PWRAssembledBlockEntity;
 import com.hbm.ntm.blockentity.PWRControllerBlockEntity;
 import com.hbm.ntm.blockentity.PyroOvenBlockEntity;
@@ -342,9 +340,6 @@ public final class ModBlockEntities {
                     BlockEntityType.Builder.of(CondenserBlockEntity::new,
                             ModBlocks.MACHINE_CONDENSER.get()).build(null));
 
-    public static final RegistryObject<BlockEntityType<LegacyFanBlockEntity>> FAN =
-            BLOCK_ENTITIES.register("fan", () ->
-                    BlockEntityType.Builder.of(LegacyFanBlockEntity::new, ModBlocks.FAN.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<SteamTurbineBlockEntity>> STEAM_TURBINE =
             BLOCK_ENTITIES.register("steam_turbine", () ->
@@ -1177,18 +1172,6 @@ public final class ModBlockEntities {
                     BlockEntityType.Builder.of(PWRAssembledBlockEntity::new,
                             ModBlocks.PWR_BLOCK.get()).build(null));
 
-    public static final RegistryObject<BlockEntityType<HadronCoilBlockEntity>> HADRON_COIL =
-            BLOCK_ENTITIES.register("hadron_coil", () ->
-                    BlockEntityType.Builder.of(HadronCoilBlockEntity::new,
-                            ModBlocks.HADRON_COIL_ALLOY.get(),
-                            ModBlocks.HADRON_COIL_GOLD.get(),
-                            ModBlocks.HADRON_COIL_NEODYMIUM.get(),
-                            ModBlocks.HADRON_COIL_MAGTUNG.get(),
-                            ModBlocks.HADRON_COIL_SCHRABIDIUM.get(),
-                            ModBlocks.HADRON_COIL_SCHRABIDATE.get(),
-                            ModBlocks.HADRON_COIL_STARMETAL.get(),
-                            ModBlocks.HADRON_COIL_CHLOROPHYTE.get(),
-                            ModBlocks.HADRON_COIL_MESE.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<CargoElevatorBlockEntity>> CARGO_ELEVATOR =
             BLOCK_ENTITIES.register("cargo_elevator", () ->

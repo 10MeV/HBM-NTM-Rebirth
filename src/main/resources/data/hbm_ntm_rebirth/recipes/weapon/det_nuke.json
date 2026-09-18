@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": ["PFP", "DCD", "PFP"],
+  "key": {
+    "P": { "item": "hbm_ntm_rebirth:neutron_reflector" },
+    "F": { "tag": "forge:circuits/controller" },
+    "D": { "item": "hbm_ntm_rebirth:det_charge" },
+    "C": { "item": "hbm_ntm_rebirth:man_core" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:det_nuke" }
+}

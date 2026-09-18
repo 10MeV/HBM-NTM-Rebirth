@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:dusts/diamond" }, "legacy_ore": "dustDiamond" },
+  "output": { "item": "minecraft:diamond" },
+  "tier_lower": 3
+}

@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:ingots/gold" }, "legacy_ore": "ingotGold" },
+  "output": { "item": "hbm_ntm_rebirth:wire_gold", "count": 8 },
+  "tier_lower": 4
+}

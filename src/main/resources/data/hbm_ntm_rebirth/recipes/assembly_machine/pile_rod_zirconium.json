@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 40,
+  "power": 200,
+  "input_items": [
+    { "count": 1, "ingredient": { "tag": "forge:billets/zirconium" }, "legacy_ore": "billetZirconium" }
+  ],
+  "input_fluids": [],
+  "output_items": [ { "item": "hbm_ntm_rebirth:pile_rod", "count": 3, "damage": 2 } ],
+  "output_fluids": [],
+  "pools": [],
+  "auto_switch_group": "autoswitch.pilerod",
+  "internal_name": "ass.pilezr",
+  "source_order": 47
+}

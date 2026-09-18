@@ -1,7 +1,6 @@
 package com.hbm.ntm.client.renderer;
 
 import com.hbm.ntm.block.HorizontalMachineBlock;
-import com.hbm.ntm.block.LegacyMachineRenderShapes;
 import com.hbm.ntm.block.ParticleAcceleratorBlock;
 import com.hbm.ntm.blockentity.PABeamlineBlockEntity;
 import com.hbm.ntm.blockentity.PABlockEntity;
@@ -26,7 +25,8 @@ public class ParticleAcceleratorRenderer implements BlockEntityRenderer<PABlockE
 
     @Override
     public boolean shouldRenderOffScreen(PABlockEntity blockEntity) {
-        return false;
+        // shouldRender() performs finite model-bounds culling; do not let vanilla cull only the core block first.
+        return true;
     }
 
     @Override
@@ -36,8 +36,7 @@ public class ParticleAcceleratorRenderer implements BlockEntityRenderer<PABlockE
 
     @Override
     public boolean shouldRender(PABlockEntity blockEntity, Vec3 cameraPos) {
-        return hasBerVisuals(blockEntity)
-                && BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
+        return BlockEntityRenderer.super.shouldRender(blockEntity, cameraPos)
                 && LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance());
     }
 
@@ -45,9 +44,6 @@ public class ParticleAcceleratorRenderer implements BlockEntityRenderer<PABlockE
     public void render(PABlockEntity blockEntity, float partialTick, PoseStack poseStack,
             MultiBufferSource buffer, int packedLight, int packedOverlay) {
         ParticleAcceleratorBlock.Variant variant = blockEntity.getVariant();
-        if (!hasBerVisuals(blockEntity)) {
-            return;
-        }
         if (!LegacyBlockEntityRenderCulling.shouldRenderMachine(blockEntity, getViewDistance())) {
             return;
         }
@@ -63,8 +59,7 @@ public class ParticleAcceleratorRenderer implements BlockEntityRenderer<PABlockE
         int modelLight = LegacyRenderLighting.resolveMultiblockLight(blockEntity, packedLight);
         try (var cullingScope = LegacyBlockEntityRenderCulling.recordMachineSubmissionScope(blockEntity)) {
             if (blockEntity instanceof PABeamlineBlockEntity beamline) {
-                renderBeamline(beamline, partialTick, texture, poseStack, buffer, modelLight, packedOverlay,
-                        LegacyMachineRenderShapes.renderChunkBakedStaticsInBer());
+                renderBeamline(beamline, partialTick, texture, poseStack, buffer, modelLight, packedOverlay);
             } else {
                 model.renderAll(texture, poseStack, buffer, modelLight, packedOverlay,
                         LegacyTexturedRenderMode.CUTOUT_CULL);
@@ -74,12 +69,9 @@ public class ParticleAcceleratorRenderer implements BlockEntityRenderer<PABlockE
     }
 
     private static void renderBeamline(PABeamlineBlockEntity beamline, float partialTick, ResourceLocation texture,
-            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay,
-            boolean renderStaticBody) {
-        if (renderStaticBody) {
-            ObjParticleAcceleratorModels.renderBeamlinePart(beamline.hasWindow() ? "BeamlineWindow" : "Beamline",
-                    texture, poseStack, buffer, packedLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
-        }
+            PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        ObjParticleAcceleratorModels.renderBeamlinePart(beamline.hasWindow() ? "BeamlineWindow" : "Beamline",
+                texture, poseStack, buffer, packedLight, packedOverlay, LegacyTexturedRenderMode.CUTOUT_CULL);
         if (!beamline.hasWindow()) {
             return;
         }
@@ -136,12 +128,4 @@ public class ParticleAcceleratorRenderer implements BlockEntityRenderer<PABlockE
         };
     }
 
-    private static boolean hasBerVisuals(PABlockEntity blockEntity) {
-        if (LegacyMachineRenderShapes.renderChunkBakedStaticsInBer()) {
-            return true;
-        }
-        return blockEntity instanceof PABeamlineBlockEntity beamline
-                && beamline.hasWindow()
-                && Math.max(beamline.getFlash(0.0F), beamline.getFlash(1.0F)) > 0.0F;
-    }
 }

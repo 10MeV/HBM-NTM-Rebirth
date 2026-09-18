@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "E": {
+      "item": "hbm_ntm_rebirth:powder_power"
+    },
+    "I": {
+      "tag": "forge:ingots/euphemium"
+    }
+  },
+  "pattern": [
+    "EEE",
+    "EIE",
+    "EEE"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:crystal_xen"
+  },
+  "show_notification": true
+}

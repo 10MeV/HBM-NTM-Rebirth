@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "Q": { "item": "hbm_ntm_rebirth:glass_quartz" },
+    "D": { "tag": "forge:ingots/dineutronium" },
+    "S": { "item": "hbm_ntm_rebirth:powder_spark_mix" },
+    "B": { "item": "hbm_ntm_rebirth:egg_balefire" }
+  },
+  "pattern": ["QDQ", "SBS", "QDQ"],
+  "result": { "item": "hbm_ntm_rebirth:laser_crystal_dnt" },
+  "show_notification": true
+}

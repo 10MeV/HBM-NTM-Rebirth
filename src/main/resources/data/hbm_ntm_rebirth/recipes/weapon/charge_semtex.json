@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "combat",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:stick_semtex" },
+    { "item": "hbm_ntm_rebirth:stick_semtex" },
+    { "item": "hbm_ntm_rebirth:stick_semtex" },
+    { "item": "hbm_ntm_rebirth:ducttape" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:charge_semtex" }
+}

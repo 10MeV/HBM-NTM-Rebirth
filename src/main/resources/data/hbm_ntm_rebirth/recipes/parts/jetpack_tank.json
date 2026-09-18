@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "tag": "forge:bolts/steel"
+    },
+    "K": {
+      "type": "hbm_ntm_rebirth:fluid_container",
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:kerosene"
+    },
+    "S": {
+      "tag": "forge:plates/steel"
+    }
+  },
+  "pattern": [
+    " S ",
+    "BKB",
+    " S "
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:jetpack_tank"
+  },
+  "show_notification": true
+}

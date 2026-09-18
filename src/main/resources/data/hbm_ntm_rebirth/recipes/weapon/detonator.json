@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "key": {
+    "C": { "tag": "forge:circuits/basic" },
+    "S": { "tag": "forge:plates/steel" }
+  },
+  "pattern": ["C", "S"],
+  "result": { "item": "hbm_ntm_rebirth:detonator" },
+  "show_notification": true
+}

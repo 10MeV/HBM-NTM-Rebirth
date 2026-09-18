@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": {
+      "item": "hbm_ntm_rebirth:plate_dalekanium"
+    },
+    "L": {
+      "type": "hbm_ntm_rebirth:fluid_container",
+      "amount": 1000,
+      "fluid": "hbm_ntm_rebirth:lava"
+    },
+    "S": {
+      "item": "hbm_ntm_rebirth:black_hole"
+    }
+  },
+  "pattern": [
+    "ALA",
+    "LSL",
+    "ALA"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:ams_core_eyeofharmony"
+  },
+  "show_notification": true
+}

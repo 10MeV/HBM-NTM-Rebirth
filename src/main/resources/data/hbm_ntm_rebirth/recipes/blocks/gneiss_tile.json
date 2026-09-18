@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": ["CC", "CC"],
+  "key": { "C": { "item": "hbm_ntm_rebirth:stone_gneiss" } },
+  "result": { "item": "hbm_ntm_rebirth:gneiss_tile", "count": 4 }
+}

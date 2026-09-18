@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [" A ", "SGS", " T "],
+  "key": {
+    "A": { "tag": "forge:dusts/aluminium" },
+    "S": { "tag": "forge:plates/steel" },
+    "G": { "tag": "forge:glass_panes" },
+    "T": { "tag": "forge:circuits/vacuum_tube" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:crt_display", "count": 4 }
+}

@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:ingots/saturnite" }, "legacy_ore": "ingotSaturnite" },
+  "output": { "item": "hbm_ntm_rebirth:plate_saturnite" },
+  "tier_lower": 3
+}

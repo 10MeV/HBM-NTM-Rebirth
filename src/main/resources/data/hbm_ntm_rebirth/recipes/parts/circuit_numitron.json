@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["G", "W", "I"],
+  "key": {
+    "G": { "tag": "forge:glass_panes" },
+    "W": { "item": "hbm_ntm_rebirth:coil_tungsten" },
+    "I": { "tag": "forge:plates/copper" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:circuit_numitron", "count": 3 }
+}

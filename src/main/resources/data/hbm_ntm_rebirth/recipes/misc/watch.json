@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["LYL", "EWE", "LYL"],
+  "key": {
+    "L": { "tag": "forge:dyes/blue" },
+    "Y": { "item": "hbm_ntm_rebirth:billet_yharonite" },
+    "E": { "tag": "forge:ingots/euphemium" },
+    "W": { "item": "minecraft:clock" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:watch" },
+  "show_notification": true
+}

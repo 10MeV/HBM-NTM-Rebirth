@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "G": {
+      "tag": "forge:plates/weapon_steel"
+    },
+    "L": {
+      "item": "minecraft:leather"
+    },
+    "M": {
+      "tag": "forge:gun_mechanisms/weapon_steel"
+    }
+  },
+  "pattern": [
+    "LLL",
+    "MGM",
+    "LLL"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:ammo_bag"
+  },
+  "show_notification": true
+}

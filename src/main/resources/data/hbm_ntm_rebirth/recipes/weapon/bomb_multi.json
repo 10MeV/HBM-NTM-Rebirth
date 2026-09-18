@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "A": {
+      "tag": "forge:wires/aluminium"
+    },
+    "C": {
+      "tag": "forge:circuits/basic"
+    },
+    "D": {
+      "tag": "forge:dyes/white"
+    },
+    "F": {
+      "item": "hbm_ntm_rebirth:fins_quad_titanium"
+    },
+    "H": {
+      "tag": "forge:shells/aluminium"
+    }
+  },
+  "pattern": [
+    "AAD",
+    "CHF",
+    "AAD"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:bomb_multi"
+  },
+  "show_notification": true
+}

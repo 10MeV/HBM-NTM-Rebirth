@@ -6,6 +6,7 @@ import com.hbm.ntm.energy.HbmEnergyStorage;
 import com.hbm.ntm.energy.HbmEnergyUtil;
 import com.hbm.ntm.item.LaserWavelength;
 import com.hbm.ntm.menu.FelMenu;
+import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.network.HbmLegacyButtonReceiver;
 import com.hbm.ntm.radiation.HazardType;
 import com.hbm.ntm.radiation.RadiationUtil;
@@ -58,6 +59,7 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
     public static final int CONTROL_POWER = 2;
     public static final long MAX_POWER = 20_000_000L;
     public static final int POWER_REQ = 1_250;
+    private static final int BEAM_SCAN_RANGE = 24;
     private static final String TAG_ITEMS = "items";
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_NAME = "name";
@@ -147,11 +149,12 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
     }
 
     private void scanBeam(Level level, Direction facing) {
-        int range = 24;
+        int range = BEAM_SCAN_RANGE;
         boolean silexSpacing = false;
         for (int i = 3; i < range; i++) {
             BlockPos beamPos = worldPosition.relative(facing, i).above();
             BlockState beamState = level.getBlockState(beamPos);
+            SilexBeamHit silexHit = resolveSilexBeamHit(level, beamPos, beamState, facing);
             // TileEntityFEL uses Material#isOpaque, not collision.  In
             // particular, glass must not stop the beam merely because it has a
             // collision shape.  isSolidRender is the modern state-level
@@ -160,33 +163,31 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
             // legacy opaque-material gate.  Its 1.20.1 visual block is
             // intentionally no-occlusion so the imported model can render,
             // which must not make the beam skip it before the SILEX branch.
-            boolean isSilex = beamState.is(ModBlocks.MACHINE_SILEX.get());
-            if (!isSilex && !beamState.isSolidRender(level, beamPos) && !beamState.is(Blocks.TNT)) {
+            // In 1.7.10 every SILEX structure cell used machine_silex.  The
+            // modern multiblock library uses a shared dummy_block instead, so
+            // the owning core has to supply that legacy block identity.
+            if (!silexHit.isSilexPart() && !beamState.isSolidRender(level, beamPos) && !beamState.is(Blocks.TNT)) {
                 distance = range;
                 silexSpacing = false;
                 continue;
             }
-            if (isSilex) {
+            if (silexHit.isSilexPart()) {
                 // The illuminated SILEX dummy is one block above the core;
                 // TileEntityFEL looks up the core one block farther along the
                 // beam at the FEL core's Y level.  Looking up only at beam Y
                 // makes every valid modern SILEX invisible to the laser.
-                BlockEntity behind = level.getBlockEntity(beamPos.relative(facing).below());
-                if (behind instanceof SilexBlockEntity silex) {
-                    Direction silexFacing = silex.getBlockState().getValue(HorizontalMachineBlock.FACING);
-                    boolean validRotation = silexFacing == facing || silexFacing == facing.getOpposite();
+                SilexBlockEntity silex = silexHit.core();
+                if (silex != null) {
+                    boolean validRotation = silex.canAcceptLaserFrom(facing);
                     if (validRotation && i >= 5 && !silexSpacing) {
-                        if (silex.getMode() != mode) {
-                            silex.acceptLaser(facing, mode);
+                        if (silex.getMode() != mode && silex.acceptLaser(facing, mode)) {
                             missingValidSilex = false;
                             silexSpacing = true;
                         }
                     } else {
                         // The legacy machine self-destructs a malformed inline
                         // SILEX assembly and emits precisely one replacement item.
-                        level.destroyBlock(silex.getBlockPos(), false);
-                        level.addFreshEntity(new ItemEntity(level, beamPos.getX() + 0.5D, beamPos.getY() + 0.5D,
-                                beamPos.getZ() + 0.5D, new ItemStack(ModBlocks.MACHINE_SILEX.get())));
+                        dismantleInvalidSilex(level, beamPos, silex);
                     }
                 }
                 continue;
@@ -204,6 +205,45 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
             }
             break;
         }
+    }
+
+    private static SilexBeamHit resolveSilexBeamHit(Level level, BlockPos beamPos, BlockState beamState,
+            Direction facing) {
+        BlockPos expectedCorePos = beamPos.relative(facing).below();
+
+        // Keep the literal block check for the old all-one-block layout and
+        // command-built fixtures, but normal 1.20.1 placement reaches the
+        // ownership branch below because its illuminated cell is dummy_block.
+        if (beamState.is(ModBlocks.MACHINE_SILEX.get())) {
+            BlockEntity expectedCore = level.getBlockEntity(expectedCorePos);
+            return new SilexBeamHit(true,
+                    expectedCore instanceof SilexBlockEntity silex ? silex : null);
+        }
+
+        MultiblockHelper.CoreLookup owner = MultiblockHelper.findCore(level, beamPos);
+        if (owner == null || !owner.state().is(ModBlocks.MACHINE_SILEX.get())) {
+            return SilexBeamHit.NONE;
+        }
+
+        // All three upper cells along the beam belong to the SILEX and must
+        // remain in its legacy opaque branch.  Only the leading one points at
+        // the core through the exact old +facing/-up lookup, however.
+        if (!owner.pos().equals(expectedCorePos)) {
+            return new SilexBeamHit(true, null);
+        }
+        BlockEntity coreEntity = level.getBlockEntity(owner.pos());
+        return new SilexBeamHit(true,
+                coreEntity instanceof SilexBlockEntity silex ? silex : null);
+    }
+
+    private static void dismantleInvalidSilex(Level level, BlockPos beamPos, SilexBlockEntity silex) {
+        level.destroyBlock(silex.getBlockPos(), false);
+        level.addFreshEntity(new ItemEntity(level, beamPos.getX() + 0.5D, beamPos.getY() + 0.5D,
+                beamPos.getZ() + 0.5D, new ItemStack(ModBlocks.MACHINE_SILEX.get())));
+    }
+
+    private record SilexBeamHit(boolean isSilexPart, @Nullable SilexBlockEntity core) {
+        private static final SilexBeamHit NONE = new SilexBeamHit(false, null);
     }
 
     private void hurtEntities(Level level, Direction facing, int beamDistance) {
@@ -273,6 +313,19 @@ public class FelBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
 
     public int getDistance() {
         return distance;
+    }
+
+    @Override
+    public AABB getRenderBoundingBox() {
+        AABB coreBounds = super.getRenderBoundingBox();
+        BlockState state = getBlockState();
+        if (!isBeamActive() || !state.hasProperty(HorizontalMachineBlock.FACING)) {
+            return coreBounds;
+        }
+        Direction facing = state.getValue(HorizontalMachineBlock.FACING);
+        int beamDistance = Mth.clamp(distance, 0, BEAM_SCAN_RANGE);
+        BlockPos beamEnd = worldPosition.relative(facing, beamDistance).above();
+        return coreBounds.minmax(new AABB(beamEnd));
     }
 
     public boolean isBeamActive() {

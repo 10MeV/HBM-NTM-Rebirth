@@ -192,7 +192,8 @@ minecraft {
 
         data {
             workingDirectory project.file('run-data')
-            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+            def hbmDataGenScope = project.hasProperty('hbmDataGenServerOnly') ? '--server' : '--all'
+            args '--mod', mod_id, hbmDataGenScope, '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
         }
     }
 }

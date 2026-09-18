@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [" R ", "ICI", " T "],
+  "key": {
+    "R": { "tag": "forge:wires/mingrade" },
+    "I": { "tag": "forge:plates/steel" },
+    "C": { "item": "hbm_ntm_rebirth:coil_copper" },
+    "T": { "item": "hbm_ntm_rebirth:coil_copper_torus" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:motor", "count": 2 }
+}

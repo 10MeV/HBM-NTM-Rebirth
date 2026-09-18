@@ -79,7 +79,9 @@ public final class LegacyJavaRecipeCoverageProvider implements DataProvider {
             "plsm.dfcreceiver",
             "plsm.dfcinjector",
             "plsm.dfcstabilizer");
-    private static final Map<String, String> RUNTIME_PAUSED_RECIPE_BLOCKERS = Map.of();
+    private static final Map<String, String> RUNTIME_PAUSED_RECIPE_BLOCKERS = Map.of(
+            "plsm.gerald",
+            "satellite/UFO special-obtainment and high-tier chain are deferred by the current migration boundary");
     private static final Map<Integer, String> ANNIHILATOR_528_EXCLUSIONS = Map.ofEntries(
             Map.entry(0, "GeneralConfig.enable528 steel blueprint milestone is excluded by the configuration modernization rule"),
             Map.entry(1, "GeneralConfig.enable528 silicon-chip blueprint milestone is excluded by the configuration modernization rule"),
@@ -144,7 +146,8 @@ public final class LegacyJavaRecipeCoverageProvider implements DataProvider {
             new CountRecipeFamily("compressor", "CompressorRecipes.java", "hbmCompressor.json", "compressor",
                     5),
             new CountRecipeFamily("arc_welder", "ArcWelderRecipes.java", "hbmArcWelder.json", "arc_welder",
-                    47),
+                    42,
+                    "registerDefaults contains 42 built-in recipes; the later readRecipe() add(...) is dynamic external-file loading, not an additional default"),
             new CountRecipeFamily("rotary_furnace", "RotaryFurnaceRecipes.java", "hbmRotaryFurnace.json",
                     "rotary_furnace", 12),
             new CountRecipeFamily("particle_accelerator", "ParticleAcceleratorRecipes.java",
@@ -156,8 +159,8 @@ public final class LegacyJavaRecipeCoverageProvider implements DataProvider {
                     "1.7.10 defaults are all gated behind GeneralConfig.enable528; modern shipped defaults remain empty and custom/datapack annihilator recipes are still supported",
                     ANNIHILATOR_528_EXCLUSIONS),
             new CountRecipeFamily("anvil_construction", "inventory/recipes/anvil/AnvilRecipes.java",
-                    "hbmAnvil.json", "anvil_construction", 61,
-                    "current source-backed construction-only hbmAnvil.json surface; smithing is tracked separately because 1.7.10 hbmAnvil.json serializes constructionRecipes only"),
+                    "hbmAnvil.json", "anvil_construction", 231,
+                    "current source-backed construction-only AnvilRecipes surface after materializing all active defaults; smithing is tracked separately, while the @Deprecated fusion_heater/fusion_hatch pair remains excluded by the modern registration audit"),
             new CountRecipeFamily("anvil_smithing", "inventory/recipes/anvil/AnvilRecipes.java", null,
                     "anvil_smithing", 58,
                     "1.7.10 registerSmithing() Java defaults; old hbmAnvil.json does not serialize smithing"),
@@ -1371,9 +1374,15 @@ public final class LegacyJavaRecipeCoverageProvider implements DataProvider {
     }
 
     private Path defaultLegacyRoot() {
-        Path workspaceSource = Path.of("E:", "mchbm", "rawcode", "Hbm-s-Nuclear-Tech-GIT-master");
-        if (Files.isDirectory(workspaceSource)) {
-            return workspaceSource;
+        Path currentWorkspaceSource = Path.of("E:", "hbmqy", "raw", "Hbm-s-Nuclear-Tech-GIT-master");
+        if (Files.isDirectory(currentWorkspaceSource)) {
+            return currentWorkspaceSource;
+        }
+
+        // Keep the historical locations as a fallback for older checkout layouts.
+        Path previousWorkspaceSource = Path.of("E:", "mchbm", "rawcode", "Hbm-s-Nuclear-Tech-GIT-master");
+        if (Files.isDirectory(previousWorkspaceSource)) {
+            return previousWorkspaceSource;
         }
         return Path.of("E:", "游戏", "我的世界", "源码包", "Hbm-s-Nuclear-Tech-GIT-master");
     }

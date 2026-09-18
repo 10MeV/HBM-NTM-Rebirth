@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:rbmk_cooler"
+    }
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:rbmk_blank"
+    },
+    {
+      "item": "hbm_ntm_rebirth:steel_grate",
+      "count": 4
+    },
+    {
+      "item": "hbm_ntm_rebirth:plate_polymer",
+      "count": 4
+    }
+  ],
+  "tier_lower": 4,
+  "overlay": "recycling"
+}

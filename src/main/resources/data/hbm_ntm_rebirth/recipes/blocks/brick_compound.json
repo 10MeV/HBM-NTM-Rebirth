@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": ["FBF", "BTB", "FBF"],
+  "key": {
+    "F": { "tag": "forge:bolts/steel" },
+    "B": { "item": "hbm_ntm_rebirth:reinforced_brick" },
+    "T": { "tag": "forge:any/tar" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:brick_compound", "count": 4 }
+}

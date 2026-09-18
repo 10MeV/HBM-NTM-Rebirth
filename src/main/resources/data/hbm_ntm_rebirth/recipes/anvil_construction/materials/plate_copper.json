@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:ingots/copper" }, "legacy_ore": "ingotCopper" },
+  "output": { "item": "hbm_ntm_rebirth:plate_copper" },
+  "tier_lower": 3
+}

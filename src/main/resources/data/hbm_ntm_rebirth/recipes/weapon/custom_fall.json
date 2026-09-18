@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "tag": "forge:circuits/advanced"
+    },
+    "H": {
+      "tag": "forge:shells/steel"
+    },
+    "I": {
+      "tag": "forge:ingots/any_rubber"
+    },
+    "P": {
+      "tag": "forge:plates/dineutronium"
+    },
+    "W": {
+      "item": "hbm_ntm_rebirth:coil_copper"
+    }
+  },
+  "pattern": [
+    "IIP",
+    "CHW",
+    "IIP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:custom_fall"
+  },
+  "show_notification": true
+}

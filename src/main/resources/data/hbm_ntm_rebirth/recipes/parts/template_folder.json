@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "L": { "tag": "forge:dyes" },
+    "P": { "item": "minecraft:paper" },
+    "B": { "tag": "forge:dyes" }
+  },
+  "pattern": ["LPL", "BPB", "LPL"],
+  "result": { "item": "hbm_ntm_rebirth:template_folder" },
+  "show_notification": true
+}

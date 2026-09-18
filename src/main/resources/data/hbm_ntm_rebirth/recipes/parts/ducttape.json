@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["F", "P", "S"],
+  "key": {
+    "F": { "item": "minecraft:string" },
+    "P": { "item": "minecraft:paper" },
+    "S": { "item": "minecraft:slime_ball" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:ducttape", "count": 4 }
+}

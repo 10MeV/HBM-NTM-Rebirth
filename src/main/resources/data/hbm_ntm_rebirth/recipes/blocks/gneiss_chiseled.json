@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:gneiss_tile" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:gneiss_chiseled", "count": 1 }
+}

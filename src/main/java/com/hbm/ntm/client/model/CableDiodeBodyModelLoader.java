@@ -21,7 +21,7 @@ import net.minecraftforge.client.model.geometry.IUnbakedGeometry;
 
 public class CableDiodeBodyModelLoader implements IGeometryLoader<CableDiodeBodyModelLoader.Geometry> {
     private static final ResourceLocation DEFAULT_PLATE = texture("cable_diode");
-    private static final ResourceLocation DEFAULT_PAD = texture("hadron_coil_alloy");
+    private static final ResourceLocation DEFAULT_PAD = texture("cable_diode_pad");
 
     @Override
     public Geometry read(JsonObject json, JsonDeserializationContext context) throws JsonParseException {

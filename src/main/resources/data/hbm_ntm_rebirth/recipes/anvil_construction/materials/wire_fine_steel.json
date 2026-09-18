@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:ingots/steel" }, "legacy_ore": "ingotSteel" },
+  "output": { "item": "hbm_ntm_rebirth:wire_fine_steel", "count": 8 },
+  "tier_lower": 4
+}

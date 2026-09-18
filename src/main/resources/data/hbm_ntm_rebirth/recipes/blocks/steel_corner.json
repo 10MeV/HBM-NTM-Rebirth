@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:steel_wall" },
+    { "item": "hbm_ntm_rebirth:steel_wall" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:steel_corner" }
+}

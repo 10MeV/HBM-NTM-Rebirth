@@ -62,6 +62,7 @@ public final class LegacyMetaItemMappings {
     public static final ResourceLocation ROD = hbm("rod");
     public static final ResourceLocation ROD_DUAL = hbm("rod_dual");
     public static final ResourceLocation ROD_QUAD = hbm("rod_quad");
+    public static final ResourceLocation PILE_ROD = hbm("pile_rod");
     public static final ResourceLocation ROD_ZIRNOX = hbm("rod_zirnox");
     public static final ResourceLocation PWR_FUEL = hbm("pwr_fuel");
     public static final ResourceLocation PWR_FUEL_HOT = hbm("pwr_fuel_hot");
@@ -505,6 +506,14 @@ public final class LegacyMetaItemMappings {
         registerList(PWR_FUEL_DEPLETED, ModItems.PWR_FUEL_DEPLETED_ITEMS);
         registerList(WATZ_PELLET, ModItems.WATZ_PELLET_ITEMS);
         registerList(INGOT_STEEL_DUSTED, ModItems.INGOT_STEEL_DUSTED_ITEMS);
+        register(PILE_ROD,
+                ModItems.PILE_ROD,
+                ModItems.PILE_ROD,
+                ModItems.PILE_ROD,
+                ModItems.PILE_ROD,
+                ModItems.PILE_ROD,
+                ModItems.PILE_ROD,
+                ModItems.PILE_ROD);
     }
 
     @SafeVarargs

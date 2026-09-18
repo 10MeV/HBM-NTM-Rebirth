@@ -1,0 +1,51 @@
+{
+  "type": "hbm_ntm_rebirth:precass",
+  "duration": 100,
+  "input_fluids": [],
+  "input_items": [
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_silicon"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 4
+    },
+    {
+      "count": 3,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:plate_polymer"
+      }
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:wires/gold"
+      },
+      "legacy_ore": "wireFineGold"
+    }
+  ],
+  "internal_name": "precass.chip",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "type": "one_of",
+      "entries": [
+        {
+          "item": "hbm_ntm_rebirth:circuit_chip",
+          "weight": 90
+        },
+        {
+          "item": "hbm_ntm_rebirth:broken_item",
+          "nbt": "{itemID:\"hbm_ntm_rebirth:circuit_chip\",itemMeta:0}",
+          "weight": 10
+        }
+      ]
+    }
+  ],
+  "pools": [
+    "528.chip"
+  ],
+  "power": 200,
+  "source_order": 2
+}

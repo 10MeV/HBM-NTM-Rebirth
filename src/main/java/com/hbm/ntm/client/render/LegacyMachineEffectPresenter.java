@@ -839,6 +839,14 @@ public final class LegacyMachineEffectPresenter {
     }
 
     public static void present(PresentStage stage) {
+        present(stage, null, false);
+    }
+
+    public static void presentAfterBlockEntities(Matrix4f projectionMatrix) {
+        present(PresentStage.AFTER_BLOCK_ENTITIES, projectionMatrix, true);
+    }
+
+    private static void present(PresentStage stage, Matrix4f projectionMatrix, boolean flushBlockEntityBackend) {
         PresentStage resolvedStage = stage == null ? PresentStage.MANUAL : stage;
         presentCalls++;
         currentFramePresentCalls++;
@@ -851,6 +859,10 @@ public final class LegacyMachineEffectPresenter {
         }
         List<QueuedTask> queue = QUEUES.get(resolvedStage);
         if (queue.isEmpty()) {
+            if (flushBlockEntityBackend) {
+                LegacyWavefrontModel.flushRenderBackend(
+                        LegacyWavefrontModel.RenderBackendFlushStage.AFTER_BLOCK_ENTITIES, projectionMatrix);
+            }
             return;
         }
         List<QueuedTask> tasks = PRESENTING.get(resolvedStage);
@@ -871,9 +883,11 @@ public final class LegacyMachineEffectPresenter {
                     throw exception;
                 }
             }
-            if (resolvedStage == PresentStage.AFTER_LEVEL) {
-                context.flushUntexturedBatches();
+            if (flushBlockEntityBackend) {
+                LegacyWavefrontModel.flushRenderBackend(
+                        LegacyWavefrontModel.RenderBackendFlushStage.AFTER_BLOCK_ENTITIES, projectionMatrix);
             }
+            context.flushPresenterBatches();
         } finally {
             try {
                 if (lateWorldTargetBound) {
@@ -1174,7 +1188,7 @@ public final class LegacyMachineEffectPresenter {
             return atlasSpriteConsumerPool.remove(lastIndex);
         }
 
-        private void flushUntexturedBatches() {
+        private void flushPresenterBatches() {
             float[] shaderColor = RenderSystem.getShaderColor();
             float red = shaderColor[0];
             float green = shaderColor[1];
@@ -1182,6 +1196,15 @@ public final class LegacyMachineEffectPresenter {
             float alpha = shaderColor[3];
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
             try {
+                for (TexturedQuadConsumerEntry entry : texturedQuadConsumers) {
+                    if (entry.buffer instanceof MultiBufferSource.BufferSource bufferSource) {
+                        // Presenter-created textured batches must draw while their RenderType still owns the
+                        // stage. In particular, the Combination Oven fire relies on SRC_ALPHA/ONE so the
+                        // opaque black background in the original 1.7.10 texture contributes no color.
+                        RenderSystem.disableBlend();
+                        bufferSource.endBatch(entry.renderMode.renderType(entry.texture));
+                    }
+                }
                 for (UntexturedConsumerEntry entry : untexturedConsumers) {
                     if (entry.buffer instanceof MultiBufferSource.BufferSource bufferSource) {
                         // Re-synchronize Blaze3D's cached blend flag with the actual GL state before the

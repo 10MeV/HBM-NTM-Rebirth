@@ -1,0 +1,13 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:stamp_desh_flat"
+    }
+  },
+  "output": {
+    "item": "hbm_ntm_rebirth:stamp_desh_wire"
+  },
+  "tier_lower": 3,
+  "overlay": "smithing"
+}

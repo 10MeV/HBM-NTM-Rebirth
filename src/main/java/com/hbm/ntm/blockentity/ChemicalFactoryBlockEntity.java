@@ -833,19 +833,11 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
 
     private boolean canExtractExternalSlot(int slot) {
         for (int i = 0; i < MODULES; i++) {
-            if ((slot >= outputStart(i) && slot <= outputEnd(i)) || isCloggedInputSlot(i, slot)) {
+            if (slot >= outputStart(i) && slot <= outputEnd(i)) {
                 return true;
             }
         }
         return false;
-    }
-
-    private boolean isCloggedInputSlot(int module, int slot) {
-        if (level == null || slot < inputStart(module) || slot > inputEnd(module)) {
-            return false;
-        }
-        return GenericMachineRecipeRuntime.isSlotClogged(getSelectedRecipeDefinition(module),
-                GenericMachineRecipe.Machine.CHEMICAL_PLANT, level, items, slot, inputSlotsFor(module));
     }
 
     private int[] inputSlotsFor(int module) {

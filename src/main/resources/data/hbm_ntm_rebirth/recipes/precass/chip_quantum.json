@@ -1,0 +1,70 @@
+{
+  "type": "hbm_ntm_rebirth:precass",
+  "duration": 300,
+  "input_fluids": [
+    {
+      "amount": 250,
+      "fluid": "hbm_ntm_rebirth:helium4"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 8,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_silicon"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 4
+    },
+    {
+      "count": 2,
+      "ingredient": {
+        "tag": "forge:dense_wires/bscco"
+      },
+      "legacy_ore": "wireDenseBSCCO"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/any_hardplastic"
+      },
+      "legacy_ore": "ingotAnyHardPlastic"
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:pellet_charged"
+      }
+    },
+    {
+      "count": 8,
+      "ingredient": {
+        "tag": "forge:wires/gold"
+      },
+      "legacy_ore": "wireFineGold"
+    }
+  ],
+  "internal_name": "precass.chip_quantum",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "type": "one_of",
+      "entries": [
+        {
+          "item": "hbm_ntm_rebirth:circuit_chip_quantum",
+          "weight": 90
+        },
+        {
+          "item": "hbm_ntm_rebirth:broken_item",
+          "nbt": "{itemID:\"hbm_ntm_rebirth:circuit_chip_quantum\",itemMeta:0}",
+          "weight": 10
+        }
+      ]
+    }
+  ],
+  "pools": [
+    "528.chip_quantum"
+  ],
+  "power": 20000,
+  "source_order": 4
+}

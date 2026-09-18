@@ -60,7 +60,11 @@ public class RBMKCraneConsoleRenderer implements BlockEntityRenderer<RBMKCraneCo
 
     @Override
     public boolean shouldRenderOffScreen(RBMKCraneConsoleBlockEntity blockEntity) {
-        return false;
+        // The crane is rendered by the console BE, but can be many blocks away
+        // from the console's render section. Register it as a global BE so the
+        // core section cannot discard the renderer before shouldRender() applies
+        // the crane's finite, source-backed render bounds and 512-block cutoff.
+        return true;
     }
 
     @Override

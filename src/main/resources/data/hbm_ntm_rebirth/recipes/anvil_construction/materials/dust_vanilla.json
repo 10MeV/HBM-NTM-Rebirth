@@ -1,0 +1,8 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    { "ingredient": { "tag": "forge:dusts/coal" }, "legacy_ore": "dustCoal" }
+  ],
+  "output": { "item": "minecraft:coal" },
+  "tier_lower": 3
+}

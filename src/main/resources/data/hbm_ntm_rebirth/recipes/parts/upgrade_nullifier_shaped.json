@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "S": { "tag": "forge:plates/steel" },
+    "P": { "item": "hbm_ntm_rebirth:powder_fire" },
+    "U": { "item": "hbm_ntm_rebirth:upgrade_template" }
+  },
+  "pattern": ["SPS", "PUP", "SPS"],
+  "result": { "item": "hbm_ntm_rebirth:upgrade_nullifier" },
+  "show_notification": true
+}

@@ -1,0 +1,16 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 20,
+  "power": 250,
+  "input_items": [
+    { "count": 1, "ingredient": { "tag": "minecraft:planks" }, "legacy_ore": "plankWood" },
+    { "count": 4, "ingredient": { "tag": "forge:ingots/graphite" }, "legacy_ore": "ingotGraphite" },
+    { "count": 2, "ingredient": { "tag": "forge:bolts/steel" }, "legacy_ore": "boltSteel" }
+  ],
+  "input_fluids": [],
+  "output_items": [ { "item": "hbm_ntm_rebirth:pile_brick" } ],
+  "output_fluids": [],
+  "pools": [],
+  "internal_name": "ass.pileblock",
+  "source_order": 165
+}

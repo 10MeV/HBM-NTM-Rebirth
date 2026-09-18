@@ -754,16 +754,9 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     }
 
     private boolean canExtractExternalSlot(int slot) {
-        return (slot >= SLOT_ITEM_OUTPUT_START && slot <= SLOT_ITEM_OUTPUT_END) || isCloggedInputSlot(slot);
-    }
-
-    private boolean isCloggedInputSlot(int slot) {
-        if (level == null) {
-            return false;
-        }
-        GenericMachineRecipe recipe = getSelectedRecipeDefinition();
-        return GenericMachineRecipeRuntime.isSlotClogged(
-                recipe, GenericMachineRecipe.Machine.CHEMICAL_PLANT, level, items, slot, INPUT_SLOTS);
+        // Inputs remain insertable for legacy automation, but never
+        // extractable through the external Forge capability.
+        return slot >= SLOT_ITEM_OUTPUT_START && slot <= SLOT_ITEM_OUTPUT_END;
     }
 
     private void refreshFluidPortSubscriptions() {

@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": ["CBC", "CBC", "CBC"],
+  "key": {
+    "C": { "item": "hbm_ntm_rebirth:concrete_smooth" },
+    "B": { "item": "minecraft:iron_bars" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:concrete_pillar", "count": 6 }
+}

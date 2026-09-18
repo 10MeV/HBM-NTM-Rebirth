@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "D": {
+      "item": "minecraft:diamond"
+    },
+    "I": {
+      "tag": "forge:ingots/iron"
+    },
+    "R": {
+      "item": "minecraft:redstone_block"
+    }
+  },
+  "pattern": [
+    "IDI",
+    "DRD",
+    "IDI"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:deco_emitter"
+  },
+  "show_notification": true
+}

@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "misc",
+  "pattern": ["LCR"],
+  "key": {
+    "L": { "item": "minecraft:carrot" },
+    "C": { "item": "hbm_ntm_rebirth:rag" },
+    "R": { "tag": "forge:circuits/vacuum_tube" }
+  },
+  "result": {
+    "item": "hbm_ntm_rebirth:plushie",
+    "nbt": "{Variant:1}"
+  },
+  "show_notification": true
+}

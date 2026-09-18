@@ -266,7 +266,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         legacyCapacitorWithItem(ModBlocks.CAPACITOR_SCHRABIDATE, "capacitor_schrabidate_block", "schrabidate");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_FENSU, "machines/fensu");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_BATTERY_REDD, "machines/fensu2");
-        existingModelWithCustomItem(ModBlocks.MACHINE_BATTERY_SOCKET, "machines/battery_socket_socket");
+        batterySocketWithItemRenderer();
         storageCrateWithItem(ModBlocks.CRATE_IRON, "crate_iron");
         storageCrateWithItem(ModBlocks.CRATE_STEEL, "crate_steel");
         storageCrateWithItem(ModBlocks.CRATE_DESH, "crate_desh");
@@ -422,10 +422,10 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 HbmBlockStateProvider::fixed180Rotation);
         legacyMachineStaticWithCustomItem(ModBlocks.CHIMNEY_INDUSTRIAL, "chimney_industrial",
                 HbmBlockStateProvider::fixed180Rotation);
-        visibleMachineWithItemRenderer(ModBlocks.MACHINE_INTAKE, "machines/intake");
+        intakeWithItemRenderer();
         legacyMachineStaticWithCustomItem(ModBlocks.MACHINE_DRAIN, "machine_drain",
                 HbmBlockStateProvider::drainStaticRotation);
-        visibleMachineWithItemRenderer(ModBlocks.MACHINE_CHUNGUS, "machines/chungus");
+        chungusWithItemRenderer();
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_HEPHAESTUS, "machines/hephaestus");
         heatBoilerWithItemRenderer();
         industrialBoilerWithItemRenderer();
@@ -438,11 +438,11 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                 HbmBlockStateProvider::solidifierRotation);
         visibleMachineWithItemRenderer(ModBlocks.HEATER_FIREBOX, "machines/firebox");
         visibleMachineWithItemRenderer(ModBlocks.HEATER_OVEN, "machines/heating_oven");
-        visibleMachineWithItemRenderer(ModBlocks.MACHINE_ASHPIT, "machines/heating_oven");
+        ashpitWithItemRenderer();
         legacyMachineStaticWithCustomItem(ModBlocks.HEATER_OILBURNER, "heater_oilburner",
                 HbmBlockStateProvider::noRotation);
         legacyMachineStaticWithCustomItem(ModBlocks.HEATER_ELECTRIC, "heater_electric",
-                HbmBlockStateProvider::solidifierRotation);
+                HbmBlockStateProvider::electricHeaterStaticRotation);
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_CONDENSER_POWERED, "machines/condenser");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_COMPRESSOR_COMPACT, "machines/compressor_compact");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_LPW2, "reactors/lpw2");
@@ -498,7 +498,6 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         legacyMachineStaticWithCustomItem(ModBlocks.MACHINE_TOWER_SMALL, "machine_tower_small",
                 HbmBlockStateProvider::noRotation);
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_TOWER_LARGE, "machines/tower_large");
-        hiddenBerBlockWithItem(ModBlocks.FAN);
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_TURBOFAN, "machines/turbofan");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_TURBINEGAS, "machines/turbinegas");
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_AMMO_PRESS, "machines/ammo_press");
@@ -509,7 +508,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         arcFurnaceWithItemRenderer();
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_ANNIHILATOR, "machines/annihilator");
         legacyMachineStaticWithCustomItem(ModBlocks.MACHINE_FEL, "machine_fel",
-                HbmBlockStateProvider::northZeroRotation);
+                HbmBlockStateProvider::felStaticRotation);
         visibleMachineWithItemRenderer(ModBlocks.MACHINE_ORBUS, "machines/orbus");
         legacyMachineStaticWithCustomItem(ModBlocks.MACHINE_MINING_LASER, "machine_mining_laser",
                 HbmBlockStateProvider::noRotation);
@@ -1079,8 +1078,7 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         ModelFile model = new ModelFile.UncheckedModelFile(
                 new ResourceLocation(HbmNtm.MOD_ID, "block/machines/solar_mirror_base"));
         simpleBlock(block.get(), model);
-        itemModels().withExistingParent(block.getId().getPath(),
-                new ResourceLocation(HbmNtm.MOD_ID, "block/machines/solar_mirror"));
+        customBlockItem(block);
     }
 
     private static int electricPressRotation(Direction facing) {
@@ -1097,6 +1095,51 @@ public class HbmBlockStateProvider extends BlockStateProvider {
             case NORTH -> 90;
             case WEST -> 180;
             case SOUTH -> 270;
+            default -> 0;
+        };
+    }
+
+    /**
+     * RenderElectricHeater uses the legacy east-zero GL yaw for the whole OBJ.
+     * Forge's baked BlockModelRotation has the opposite quarter-turn sign, so
+     * the static model needs the inverse north/south mapping. The definition's
+     * runtime fallback keeps the original east-zero GL/PoseStack table.
+     */
+    private static int electricHeaterStaticRotation(Direction facing) {
+        return switch (facing) {
+            case NORTH -> 270;
+            case WEST -> 180;
+            case SOUTH -> 90;
+            default -> 0;
+        };
+    }
+
+    /**
+     * The Battery Socket's fixed Socket part is chunk baked, while Supports,
+     * Battery/Capacitor and creative effects retain RenderBatterySocket's
+     * GL/PoseStack yaw in the BER. Forge's BlockModelRotation has the opposite
+     * quarter-turn sign, so only the baked Socket receives the inverse table.
+     */
+    private static int batterySocketChunkRotation(Direction facing) {
+        return switch (facing) {
+            case NORTH -> 270;
+            case WEST -> 180;
+            case SOUTH -> 90;
+            default -> 0;
+        };
+    }
+
+    /**
+     * RenderAshpit gives Main, Door and Inner the same east-zero GL yaw. Main is
+     * chunk baked in the modern port while Door/Inner retain that yaw in the BER;
+     * Forge's BlockModelRotation reverses the sign of quarter turns, so only the
+     * baked Main needs the inverse north/south mapping.
+     */
+    private static int ashpitChunkRotation(Direction facing) {
+        return switch (facing) {
+            case NORTH -> 270;
+            case WEST -> 180;
+            case SOUTH -> 90;
             default -> 0;
         };
     }
@@ -1196,6 +1239,21 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         };
     }
 
+    /**
+     * Inverse of the legacy Arc Furnace BER yaw for the chunk-baked Furnace
+     * shell. The 0/180 degree cases are unchanged; only the quarter turns
+     * need to be reversed to keep the static shell aligned with the dynamic
+     * parts in North/South-facing worlds.
+     */
+    private static int arcFurnaceChunkRotation(Direction facing) {
+        return switch (facing) {
+            case NORTH -> 270;
+            case WEST -> 180;
+            case SOUTH -> 90;
+            default -> 0;
+        };
+    }
+
     private static int noRotation(Direction facing) {
         return 0;
     }
@@ -1266,6 +1324,20 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         };
     }
 
+    /**
+     * The FEL body is chunk baked while its active beams retain RenderFEL's
+     * north-zero GL/PoseStack yaw. Forge's BlockModelRotation reverses the
+     * quarter-turn sign, so only the baked body uses the inverse mapping.
+     */
+    private static int felStaticRotation(Direction facing) {
+        return switch (facing) {
+            case EAST -> 90;
+            case SOUTH -> 180;
+            case WEST -> 270;
+            default -> 0;
+        };
+    }
+
     private static int cargoElevatorRotation(Direction facing) {
         return switch (facing) {
             case EAST -> 90;
@@ -1295,10 +1367,30 @@ public class HbmBlockStateProvider extends BlockStateProvider {
 
     private static int industrialTurbineRotation(Direction facing) {
         return switch (facing) {
-            case EAST -> 0;
-            case NORTH -> 90;
-            case WEST -> 180;
-            case SOUTH -> 270;
+            // Forge's baked BlockModelRotation uses the opposite quarter-turn
+            // sign from the PoseStack yaw used by IndustrialSteamTurbineRenderer.
+            // Keep the static Turbine body in the same world orientation as the
+            // dynamic Gauge/Flywheel (south-zero: S=0, E=90, N=180, W=270).
+            case EAST -> 270;
+            case NORTH -> 180;
+            case WEST -> 90;
+            case SOUTH -> 0;
+            default -> 0;
+        };
+    }
+
+    /**
+     * Forge's baked blockstate rotation uses the opposite quarter-turn sign
+     * from the legacy PoseStack yaw used by ChungusRenderer. Keep the static
+     * Body aligned with the dynamic Lever and Blades for every horizontal
+     * facing; SOUTH and NORTH are unchanged because they are 0/180 turns.
+     */
+    private static int chungusChunkRotation(Direction facing) {
+        return switch (facing) {
+            case EAST -> 270;
+            case NORTH -> 180;
+            case WEST -> 90;
+            case SOUTH -> 0;
             default -> 0;
         };
     }
@@ -1336,6 +1428,47 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         customBlockItem(block);
     }
 
+    private void batterySocketWithItemRenderer() {
+        // Preserve the hand-written model: it contains the legacy +Z translation
+        // that aligns the baked Socket with the direct BER model coordinate system.
+        ModelFile model = new ModelFile.UncheckedModelFile(modLoc("block/machine_battery_socket"));
+        getVariantBuilder(ModBlocks.MACHINE_BATTERY_SOCKET.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(model)
+                        .rotationY(batterySocketChunkRotation(
+                                state.getValue(HorizontalMachineBlock.FACING)))
+                        .build());
+        customBlockItem(ModBlocks.MACHINE_BATTERY_SOCKET);
+    }
+
+    private void intakeWithItemRenderer() {
+        ModelFile model = particleOnlyModel("machine_intake", "machines/intake");
+        getVariantBuilder(ModBlocks.MACHINE_INTAKE.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(model)
+                        // The static Base is chunk baked while Fan keeps the 1.7.10
+                        // GL/PoseStack yaw in the BER. BlockModelRotation reverses the
+                        // quarter-turn sign, so invert only NORTH/SOUTH for the Base.
+                        .rotationY(switch (state.getValue(HorizontalMachineBlock.FACING)) {
+                            case NORTH -> 270;
+                            case WEST -> 180;
+                            case SOUTH -> 90;
+                            default -> 0;
+                        })
+                        .build());
+        customBlockItem(ModBlocks.MACHINE_INTAKE);
+    }
+
+    private void ashpitWithItemRenderer() {
+        ModelFile model = particleOnlyModel("machine_ashpit", "machines/heating_oven");
+        getVariantBuilder(ModBlocks.MACHINE_ASHPIT.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(model)
+                        .rotationY(ashpitChunkRotation(state.getValue(HorizontalMachineBlock.FACING)))
+                        .build());
+        customBlockItem(ModBlocks.MACHINE_ASHPIT);
+    }
+
     private void oreSlopperWithItemRenderer() {
         ModelFile model = particleOnlyModel("machine_ore_slopper", "machines/ore_slopper");
         getVariantBuilder(ModBlocks.MACHINE_ORE_SLOPPER.get())
@@ -1360,7 +1493,11 @@ public class HbmBlockStateProvider extends BlockStateProvider {
         getVariantBuilder(ModBlocks.MACHINE_ARC_FURNACE.get())
                 .forAllStates(state -> ConfiguredModel.builder()
                         .modelFile(model)
-                        .rotationY(eastZeroRotation(state.getValue(HorizontalMachineBlock.FACING)))
+                        // The static Furnace shell is chunk-baked, while the lid,
+                        // electrodes and cables keep the legacy BER/PoseStack yaw.
+                        // BlockModelRotation uses the opposite sign at 90 degrees,
+                        // so the baked shell must use the inverse of eastZeroRotation.
+                        .rotationY(arcFurnaceChunkRotation(state.getValue(HorizontalMachineBlock.FACING)))
                         .build());
         customBlockItem(ModBlocks.MACHINE_ARC_FURNACE);
     }
@@ -1421,6 +1558,16 @@ public class HbmBlockStateProvider extends BlockStateProvider {
                         .rotationY(industrialTurbineRotation(state.getValue(HorizontalMachineBlock.FACING)))
                         .build());
         customBlockItem(ModBlocks.MACHINE_INDUSTRIAL_TURBINE);
+    }
+
+    private void chungusWithItemRenderer() {
+        ModelFile model = new ModelFile.UncheckedModelFile(modLoc("block/machine_chungus"));
+        getVariantBuilder(ModBlocks.MACHINE_CHUNGUS.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(model)
+                        .rotationY(chungusChunkRotation(state.getValue(HorizontalMachineBlock.FACING)))
+                        .build());
+        customBlockItem(ModBlocks.MACHINE_CHUNGUS);
     }
 
     private void frameStateVisibleMachineWithItemRenderer(RegistryObject<Block> block,

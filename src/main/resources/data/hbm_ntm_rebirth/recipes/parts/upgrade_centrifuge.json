@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": { "item": "hbm_ntm_rebirth:centrifuge_element" },
+    "H": { "item": "minecraft:hopper" },
+    "U": { "item": "hbm_ntm_rebirth:upgrade_shredder" },
+    "D": { "tag": "forge:ingots/any_plastic" },
+    "T": { "item": "hbm_ntm_rebirth:machine_transformer" }
+  },
+  "pattern": ["PHP", "PUP", "DTD"],
+  "result": { "item": "hbm_ntm_rebirth:upgrade_centrifuge" },
+  "show_notification": true
+}

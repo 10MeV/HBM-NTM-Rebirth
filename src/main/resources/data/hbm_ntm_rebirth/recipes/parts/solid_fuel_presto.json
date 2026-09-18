@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": { "item": "minecraft:paper" },
+    "S": { "item": "hbm_ntm_rebirth:solid_fuel" },
+    "R": { "item": "minecraft:redstone" }
+  },
+  "pattern": [" P ", "SRS", " P "],
+  "result": { "item": "hbm_ntm_rebirth:solid_fuel_presto" },
+  "show_notification": true
+}

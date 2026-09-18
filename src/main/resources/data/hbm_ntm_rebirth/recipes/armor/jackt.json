@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "pattern": ["S S", "LIL", "LIL"],
+  "key": {
+    "S": { "tag": "forge:plates/steel" },
+    "L": { "item": "minecraft:leather" },
+    "I": { "tag": "forge:ingots/any_rubber" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:jackt" }
+}

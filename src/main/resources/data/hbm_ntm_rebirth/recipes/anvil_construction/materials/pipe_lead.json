@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:plates/lead" }, "count": 3, "legacy_ore": "plateLead" },
+  "output": { "item": "hbm_ntm_rebirth:pipes_lead" },
+  "tier_lower": 1
+}

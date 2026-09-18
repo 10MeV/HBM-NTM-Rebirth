@@ -1,0 +1,23 @@
+{
+  "type": "hbm_ntm_rebirth:shaped_nbt",
+  "category": "redstone",
+  "key": {
+    "C": {
+      "item": "hbm_ntm_rebirth:concrete_smooth"
+    },
+    "D": {
+      "tag": "forge:dyes/light_gray"
+    }
+  },
+  "pattern": [
+    "CCC",
+    "CDC",
+    "CCC"
+  ],
+  "result": {
+    "count": 8,
+    "item": "hbm_ntm_rebirth:concrete_colored",
+    "nbt": "{hbmLegacyVariant:8}"
+  },
+  "show_notification": true
+}

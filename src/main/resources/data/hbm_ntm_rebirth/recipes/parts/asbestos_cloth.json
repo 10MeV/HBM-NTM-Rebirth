@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["SCS", "CPC", "SCS"],
+  "key": {
+    "S": { "item": "minecraft:string" },
+    "C": { "tag": "minecraft:wool" },
+    "P": { "tag": "forge:dusts/boron" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:asbestos_cloth", "count": 8 }
+}

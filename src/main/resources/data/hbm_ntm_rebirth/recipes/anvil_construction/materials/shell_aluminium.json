@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:plates/aluminium" }, "count": 4, "legacy_ore": "plateAluminum" },
+  "output": { "item": "hbm_ntm_rebirth:shell_aluminium" },
+  "tier_lower": 1
+}

@@ -1,7 +1,6 @@
 package com.hbm.ntm.world;
 
 import com.hbm.ntm.HbmNtm;
-import com.hbm.util.fauxpointtwelve.NBTTagCompound;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraftforge.fml.ModList;
@@ -59,13 +58,7 @@ public final class BlockMigrationHelper {
     }
 
     public static void save(CompoundTag tag) {
-        if (tag instanceof NBTTagCompound legacyTag) {
-            legacyTag.setInteger(NBT_KEY_BUILD_NUMBER, buildNumber());
-        } else {
-            NBTTagCompound legacyTag = NBTTagCompound.copyOf(tag);
-            legacyTag.setInteger(NBT_KEY_BUILD_NUMBER, buildNumber());
-            replaceWithLegacy(tag, legacyTag);
-        }
+        tag.putInt(NBT_KEY_BUILD_NUMBER, buildNumber());
         SAVED_CHUNKS.incrementAndGet();
     }
 
@@ -100,14 +93,10 @@ public final class BlockMigrationHelper {
     }
 
     public static MigrationMarker inspectTag(CompoundTag tag) {
-        if (tag == null) {
+        if (tag == null || !tag.contains(NBT_KEY_BUILD_NUMBER)) {
             return inspectMarker(null);
         }
-        NBTTagCompound legacyTag = NBTTagCompound.copyOf(tag);
-        if (!legacyTag.hasKey(NBT_KEY_BUILD_NUMBER)) {
-            return inspectMarker(null);
-        }
-        return inspectMarker(legacyTag.getInteger(NBT_KEY_BUILD_NUMBER));
+        return inspectMarker(tag.getInt(NBT_KEY_BUILD_NUMBER));
     }
 
     public static MigrationMarker inspectMarker(Integer previousBuild) {
@@ -194,13 +183,6 @@ public final class BlockMigrationHelper {
         } catch (NumberFormatException ex) {
             return Optional.empty();
         }
-    }
-
-    private static void replaceWithLegacy(CompoundTag target, NBTTagCompound source) {
-        for (String key : target.getAllKeys().toArray(new String[0])) {
-            target.remove(key);
-        }
-        target.merge(source);
     }
 
     private BlockMigrationHelper() {

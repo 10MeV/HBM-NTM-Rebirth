@@ -317,6 +317,37 @@ public class WoodBurnerBlockEntity extends HbmEnergyAndFluidBlockEntity
         return powerGen;
     }
 
+    @Override
+    public CompoundTag getClientSyncTag() {
+        CompoundTag tag = super.getClientSyncTag();
+        tag.putInt(TAG_BURN_TIME, burnTime);
+        tag.putInt(TAG_MAX_BURN_TIME, maxBurnTime);
+        tag.putBoolean(TAG_IS_ON, on);
+        tag.putBoolean(TAG_LIQUID_BURN, liquidBurn);
+        tag.putInt(TAG_POWER_GEN, powerGen);
+        return tag;
+    }
+
+    @Override
+    public void handleClientSyncTag(CompoundTag tag) {
+        super.handleClientSyncTag(tag);
+        if (tag.contains(TAG_BURN_TIME)) {
+            burnTime = Math.max(0, tag.getInt(TAG_BURN_TIME));
+        }
+        if (tag.contains(TAG_MAX_BURN_TIME)) {
+            maxBurnTime = Math.max(0, tag.getInt(TAG_MAX_BURN_TIME));
+        }
+        if (tag.contains(TAG_IS_ON)) {
+            on = tag.getBoolean(TAG_IS_ON);
+        }
+        if (tag.contains(TAG_LIQUID_BURN)) {
+            liquidBurn = tag.getBoolean(TAG_LIQUID_BURN);
+        }
+        if (tag.contains(TAG_POWER_GEN)) {
+            powerGen = Math.max(0, tag.getInt(TAG_POWER_GEN));
+        }
+    }
+
     public List<ItemStack> getDrops() {
         return HbmInventoryMenuHelper.clearToDrops(items);
     }

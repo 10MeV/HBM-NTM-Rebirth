@@ -1,0 +1,25 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:rbmk_outgasser"
+    }
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:rbmk_blank"
+    },
+    {
+      "item": "hbm_ntm_rebirth:steel_grate",
+      "count": 6
+    },
+    {
+      "item": "hbm_ntm_rebirth:tank_steel"
+    },
+    {
+      "item": "minecraft:hopper"
+    }
+  ],
+  "tier_lower": 4,
+  "overlay": "recycling"
+}

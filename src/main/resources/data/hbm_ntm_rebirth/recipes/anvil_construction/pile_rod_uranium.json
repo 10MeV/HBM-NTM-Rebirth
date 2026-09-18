@@ -1,0 +1,19 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": {
+      "tag": "forge:billets/uranium"
+    },
+    "count": 3,
+    "legacy_ore": "billetUranium"
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:pile_rod",
+      "count": 1,
+      "damage": 3
+    }
+  ],
+  "tier_lower": 2,
+  "overlay": "recycling"
+}

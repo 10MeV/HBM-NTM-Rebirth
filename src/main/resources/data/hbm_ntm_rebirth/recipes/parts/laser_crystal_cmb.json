@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "Q": { "item": "hbm_ntm_rebirth:glass_quartz" },
+    "B": { "tag": "forge:ingots/combine_steel" },
+    "C": { "tag": "forge:ingots/schrabidate" },
+    "S": { "item": "hbm_ntm_rebirth:cell_anti_schrabidium" }
+  },
+  "pattern": ["QBQ", "CSC", "QBQ"],
+  "result": { "item": "hbm_ntm_rebirth:laser_crystal_cmb" },
+  "show_notification": true
+}

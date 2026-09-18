@@ -1,0 +1,44 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:reactor_research"
+    }
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:ingot_steel",
+      "count": 8
+    },
+    {
+      "item": "hbm_ntm_rebirth:ingot_tcalloy",
+      "count": 4
+    },
+    {
+      "item": "hbm_ntm_rebirth:motor_desh",
+      "count": 2
+    },
+    {
+      "item": "hbm_ntm_rebirth:ingot_boron",
+      "count": 5
+    },
+    {
+      "item": "hbm_ntm_rebirth:plate_lead",
+      "count": 8
+    },
+    {
+      "item": "hbm_ntm_rebirth:crt_display",
+      "count": 3
+    },
+    {
+      "item": "hbm_ntm_rebirth:circuit_basic"
+    },
+    {
+      "item": "hbm_ntm_rebirth:circuit_basic",
+      "count": 1,
+      "chance": 0.5
+    }
+  ],
+  "tier_lower": 4,
+  "overlay": "recycling"
+}

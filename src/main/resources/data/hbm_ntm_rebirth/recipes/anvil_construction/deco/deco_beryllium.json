@@ -1,0 +1,7 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:ingots/beryllium" }, "count": 1, "legacy_ore": "ingotBeryllium" },
+  "output": { "item": "hbm_ntm_rebirth:deco_beryllium", "count": 4 },
+  "tier_lower": 1,
+  "overlay": "construction"
+}

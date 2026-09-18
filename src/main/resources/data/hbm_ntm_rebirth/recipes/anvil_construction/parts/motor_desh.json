@@ -1,0 +1,11 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    { "ingredient": { "item": "hbm_ntm_rebirth:motor" }, "count": 1 },
+    { "ingredient": { "tag": "forge:ingots/any_plastic" }, "count": 2, "legacy_ore": "ingotAnyPlastic" },
+    { "ingredient": { "tag": "forge:ingots/desh" }, "count": 2, "legacy_ore": "ingotDesh" },
+    { "ingredient": { "tag": "forge:dense_wires/gold" }, "count": 1, "legacy_ore": "wireDenseGold" }
+  ],
+  "output": { "item": "hbm_ntm_rebirth:motor_desh" },
+  "tier_lower": 3
+}

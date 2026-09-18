@@ -22,7 +22,7 @@ import net.minecraft.world.phys.Vec3;
 
 public class CableDiodeRenderer implements BlockEntityRenderer<CableDiodeBlockEntity> {
     private static final TextureAtlasSprite PLATE_SPRITE = sprite("cable_diode");
-    private static final TextureAtlasSprite PAD_SPRITE = sprite("hadron_coil_alloy");
+    private static final TextureAtlasSprite PAD_SPRITE = sprite("cable_diode_pad");
     private static final double SLAB_THICKNESS = 0.125D;
     private static final double PAD_RADIUS = 0.375D;
 

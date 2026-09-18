@@ -1,0 +1,15 @@
+{
+  "type": "hbm_ntm_rebirth:assembly_machine",
+  "duration": 40,
+  "power": 200,
+  "input_items": [
+    { "count": 3, "ingredient": { "tag": "forge:billets/uranium" }, "legacy_ore": "billetUranium" }
+  ],
+  "input_fluids": [],
+  "output_items": [ { "item": "hbm_ntm_rebirth:pile_rod", "damage": 3 } ],
+  "output_fluids": [],
+  "pools": [],
+  "auto_switch_group": "autoswitch.pilerod",
+  "internal_name": "ass.pilenu",
+  "source_order": 48
+}

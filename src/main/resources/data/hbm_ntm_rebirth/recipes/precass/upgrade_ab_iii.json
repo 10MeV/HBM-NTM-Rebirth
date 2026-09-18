@@ -1,0 +1,62 @@
+{
+  "type": "hbm_ntm_rebirth:precass",
+  "duration": 400,
+  "input_fluids": [
+    {
+      "amount": 500,
+      "fluid": "hbm_ntm_rebirth:solvent"
+    }
+  ],
+  "input_items": [
+    {
+      "count": 16,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_chip"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 5
+    },
+    {
+      "count": 16,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:circuit_capacitor_tantalium"
+      },
+      "legacy_id": "hbm:circuit",
+      "legacy_meta": 2
+    },
+    {
+      "count": 1,
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:upgrade_afterburn_2"
+      }
+    },
+    {
+      "count": 4,
+      "ingredient": {
+        "tag": "forge:ingots/rubber"
+      },
+      "legacy_ore": "ingotRubber"
+    }
+  ],
+  "internal_name": "precass.upgrade_ab_iii",
+  "output_fluids": [],
+  "output_items": [
+    {
+      "type": "one_of",
+      "entries": [
+        {
+          "item": "hbm_ntm_rebirth:upgrade_afterburn_3",
+          "weight": 25
+        },
+        {
+          "item": "hbm_ntm_rebirth:broken_item",
+          "nbt": "{itemID:\"hbm_ntm_rebirth:upgrade_afterburn_3\",itemMeta:0}",
+          "weight": 75
+        }
+      ]
+    }
+  ],
+  "pools": [],
+  "power": 25000,
+  "source_order": 18
+}

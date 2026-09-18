@@ -284,8 +284,7 @@ public final class GenericMachineRecipeRuntime {
     }
 
     private static boolean isSameLegacyOutputStack(ItemStack current, ItemStack output) {
-        return current.getItem() == output.getItem()
-                && current.getDamageValue() == output.getDamageValue();
+        return ItemStack.isSameItemSameTags(current, output);
     }
 
     private static boolean hasItemInputs(GenericMachineRecipe recipe, ItemStackHandler items, int[] inputSlots) {

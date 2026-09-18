@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    { "item": "hbm_ntm_rebirth:asphalt_light" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:asphalt" }
+}

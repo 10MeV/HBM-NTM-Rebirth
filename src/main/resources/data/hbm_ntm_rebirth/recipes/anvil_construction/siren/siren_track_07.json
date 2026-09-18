@@ -1,0 +1,22 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "inputs": [
+    {
+      "ingredient": {
+        "tag": "forge:plates/steel"
+      },
+      "legacy_ore": "plateSteel"
+    },
+    {
+      "ingredient": {
+        "item": "hbm_ntm_rebirth:plate_polymer"
+      }
+    }
+  ],
+  "output": {
+    "item": "hbm_ntm_rebirth:siren_track",
+    "nbt": "{trackId:7}"
+  },
+  "tier_lower": 2,
+  "overlay": "construction"
+}

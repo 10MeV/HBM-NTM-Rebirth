@@ -3,6 +3,7 @@ package com.hbm.ntm.client.particle;
 import com.hbm.ntm.HbmNtm;
 import com.hbm.ntm.client.obj.LegacyTexturedRenderMode;
 import com.hbm.ntm.client.obj.LegacyWavefrontModel;
+import com.hbm.ntm.client.render.LegacyParticleModelRenderContext;
 import com.hbm.ntm.client.render.LegacyPoseRotations;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -175,8 +176,10 @@ public class SkeletonParticle extends Particle {
             // Preserve the particle list order across texture changes; only same-texture runs batch.
             flushSkeletonBatch(buffer);
         }
-        renderSkeletonPart(this.type.partName, texture, poseStack, buffer, getLightColor(partialTick),
-                color(this.rCol), color(this.gCol), color(this.bCol), color(this.alpha));
+        try (LegacyParticleModelRenderContext.Scope modelViewScope = LegacyParticleModelRenderContext.enter()) {
+            renderSkeletonPart(this.type.partName, texture, poseStack, buffer, getLightColor(partialTick),
+                    color(this.rCol), color(this.gCol), color(this.bCol), color(this.alpha));
+        }
         activeSkeletonRenderType = renderType;
         activeSkeletonTexture = texture;
     }

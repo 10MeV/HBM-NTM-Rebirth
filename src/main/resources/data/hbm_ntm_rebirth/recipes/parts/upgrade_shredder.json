@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": { "item": "hbm_ntm_rebirth:motor" },
+    "H": { "item": "minecraft:hopper" },
+    "C": { "item": "hbm_ntm_rebirth:blades_titanium" },
+    "U": { "item": "hbm_ntm_rebirth:upgrade_smelter" },
+    "D": { "tag": "forge:plates/titanium" },
+    "T": { "item": "hbm_ntm_rebirth:machine_transformer" }
+  },
+  "pattern": ["PHP", "CUC", "DTD"],
+  "result": { "item": "hbm_ntm_rebirth:upgrade_shredder" },
+  "show_notification": true
+}

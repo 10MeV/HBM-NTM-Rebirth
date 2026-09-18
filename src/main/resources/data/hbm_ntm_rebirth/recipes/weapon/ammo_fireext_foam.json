@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "combat",
+  "pattern": [" N ", "NFN", " N "],
+  "key": {
+    "N": { "tag": "forge:dusts/niter" },
+    "F": { "item": "hbm_ntm_rebirth:ammo_fireext_0" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:ammo_fireext_1" },
+  "show_notification": true
+}

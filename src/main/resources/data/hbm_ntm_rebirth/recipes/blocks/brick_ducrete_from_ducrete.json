@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": ["CDC", "DLD", "CDC"],
+  "key": {
+    "D": { "item": "hbm_ntm_rebirth:ducrete" },
+    "C": { "item": "minecraft:clay_ball" },
+    "L": { "tag": "forge:plates/lead" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:brick_ducrete", "count": 4 }
+}

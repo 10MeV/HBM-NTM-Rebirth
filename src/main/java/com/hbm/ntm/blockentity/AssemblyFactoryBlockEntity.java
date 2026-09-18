@@ -793,19 +793,11 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
 
     private boolean canExtractExternalSlot(int slot) {
         for (int i = 0; i < MODULES; i++) {
-            if (slot == outputSlot(i) || isCloggedInputSlot(i, slot)) {
+            if (slot == outputSlot(i)) {
                 return true;
             }
         }
         return false;
-    }
-
-    private boolean isCloggedInputSlot(int module, int slot) {
-        if (level == null || slot < inputStart(module) || slot > inputEnd(module)) {
-            return false;
-        }
-        return GenericMachineRecipeRuntime.isSlotClogged(getSelectedRecipeDefinition(module),
-                GenericMachineRecipe.Machine.ASSEMBLY_MACHINE, level, items, slot, inputSlotsFor(module));
     }
 
     private int[] inputSlotsFor(int module) {

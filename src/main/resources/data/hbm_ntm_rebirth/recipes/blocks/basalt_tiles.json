@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": ["CC", "CC"],
+  "key": { "C": { "item": "hbm_ntm_rebirth:basalt_brick" } },
+  "result": { "item": "hbm_ntm_rebirth:basalt_tiles", "count": 4 }
+}

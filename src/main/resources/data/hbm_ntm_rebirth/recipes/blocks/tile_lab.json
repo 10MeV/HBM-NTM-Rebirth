@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building_blocks",
+  "key": {
+    "C": { "item": "minecraft:brick" },
+    "B": { "tag": "forge:ingots/asbestos" }
+  },
+  "pattern": ["CBC", "CBC", "CBC"],
+  "result": { "item": "hbm_ntm_rebirth:tile_lab", "count": 4 },
+  "show_notification": true
+}

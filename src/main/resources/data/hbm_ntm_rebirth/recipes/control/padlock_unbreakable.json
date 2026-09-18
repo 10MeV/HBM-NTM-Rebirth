@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "tag": "forge:bolts/dura_steel"
+    },
+    "D": {
+      "item": "minecraft:diamond"
+    },
+    "P": {
+      "tag": "forge:plates/saturnite"
+    }
+  },
+  "pattern": [
+    " P ",
+    "PBP",
+    "PDP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:padlock_unbreakable"
+  },
+  "show_notification": true
+}

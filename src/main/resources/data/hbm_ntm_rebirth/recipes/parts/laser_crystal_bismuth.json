@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "Q": { "item": "hbm_ntm_rebirth:glass_quartz" },
+    "U": { "tag": "forge:ingots/uranium" },
+    "T": { "tag": "forge:ingots/th232" },
+    "B": { "item": "hbm_ntm_rebirth:nugget_bismuth" },
+    "C": { "item": "hbm_ntm_rebirth:crystal_rare" }
+  },
+  "pattern": ["QUQ", "BCB", "QTQ"],
+  "result": { "item": "hbm_ntm_rebirth:laser_crystal_bismuth" },
+  "show_notification": true
+}

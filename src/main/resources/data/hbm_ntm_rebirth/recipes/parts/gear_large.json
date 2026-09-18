@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["III", "ICI", "III"],
+  "key": {
+    "I": { "tag": "forge:plates/iron" },
+    "C": { "tag": "forge:ingots/copper" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:gear_large" }
+}

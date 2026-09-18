@@ -1,0 +1,6 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": { "ingredient": { "tag": "forge:ingots/mingrade" }, "legacy_ore": "ingotMingrade" },
+  "output": { "item": "hbm_ntm_rebirth:wire_fine_mingrade", "count": 8 },
+  "tier_lower": 4
+}

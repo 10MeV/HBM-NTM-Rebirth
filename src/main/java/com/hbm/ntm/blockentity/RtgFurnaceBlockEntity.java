@@ -23,7 +23,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -251,13 +250,10 @@ public class RtgFurnaceBlockEntity extends BlockEntity implements MenuProvider {
             if (target < 0) {
                 return ItemStack.EMPTY;
             }
-            if (side == null) {
-                return target == 4 ? items.extractItem(target, amount, simulate) : ItemStack.EMPTY;
-            }
-            ItemStack stack = items.getStackInSlot(target);
-            return side != Direction.DOWN || target != 1 || stack.is(Items.BUCKET)
-                    ? items.extractItem(target, amount, simulate)
-                    : ItemStack.EMPTY;
+            // Fuel slots (1..3) and the smelting input (0) are insertion-only.
+            // A sided ITEM_HANDLER is a physical automation view: extraction is
+            // reserved for the finished product slot, regardless of direction.
+            return target == 4 ? items.extractItem(target, amount, simulate) : ItemStack.EMPTY;
         }
 
         @Override

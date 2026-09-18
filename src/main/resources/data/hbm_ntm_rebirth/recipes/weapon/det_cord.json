@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [" P ", "PGP", " P "],
+  "key": {
+    "P": { "item": "minecraft:paper" },
+    "G": { "item": "minecraft:gunpowder" }
+  },
+  "result": { "item": "hbm_ntm_rebirth:det_cord", "count": 4 }
+}

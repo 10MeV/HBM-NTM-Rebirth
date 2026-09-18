@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": { "tag": "forge:plates/copper" },
+    "H": { "item": "minecraft:hopper" },
+    "C": { "item": "hbm_ntm_rebirth:coil_tungsten" },
+    "U": { "item": "hbm_ntm_rebirth:upgrade_template" },
+    "D": { "item": "hbm_ntm_rebirth:coil_copper" },
+    "T": { "item": "hbm_ntm_rebirth:machine_transformer" }
+  },
+  "pattern": ["PHP", "CUC", "DTD"],
+  "result": { "item": "hbm_ntm_rebirth:upgrade_smelter" },
+  "show_notification": true
+}

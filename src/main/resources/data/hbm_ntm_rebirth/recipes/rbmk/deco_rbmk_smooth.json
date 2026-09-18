@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": ["R"],
+  "key": { "R": { "item": "hbm_ntm_rebirth:deco_rbmk" } },
+  "result": { "item": "hbm_ntm_rebirth:deco_rbmk_smooth" },
+  "show_notification": true
+}

@@ -219,6 +219,8 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.hbm_ntm_rebirth.coil_copper", "\u7d2b\u94dc\u7ebf\u5708");
         add("item.hbm_ntm_rebirth.coil_tungsten", "\u52a0\u70ed\u7ebf\u5708");
         add("item.hbm_ntm_rebirth.coil_gold", "\u91d1\u7ebf\u5708");
+        add("item.hbm_ntm_rebirth.broken_item", "\u635f\u574f\u7684\u7269\u54c1");
+        add("item.hbm_ntm_rebirth.broken_item.prefix", "\u7834\u635f %s");
         add("item.hbm_ntm_rebirth.motor", "\u9a6c\u8fbe");
         add("item.hbm_ntm_rebirth.gear_large", "\u5927\u578b\u9f7f\u8f6e");
         add("item.hbm_ntm_rebirth.gear_large_steel", "\u5927\u578b\u94a2\u9f7f\u8f6e");
@@ -2346,16 +2348,6 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("block.hbm_ntm_rebirth.machine_crystallizer", "\u77ff\u7269\u9178\u5316\u5668");
         add("block.hbm_ntm_rebirth.machine_electrolyser", "\u7535\u89e3\u673a");
         add("block.hbm_ntm_rebirth.machine_exposure_chamber", "\u8f90\u7167\u8231");
-        add("block.hbm_ntm_rebirth.hadron_coil_alloy", "\u81f4\u5bc6\u8d85\u5bfc\u7ebf\u5708");
-        add("block.hbm_ntm_rebirth.hadron_coil_gold", "\u81f4\u5bc6\u91d1\u7ebf\u5708");
-        add("block.hbm_ntm_rebirth.hadron_coil_neodymium", "\u81f4\u5bc6\u94d5\u7ebf\u5708");
-        add("block.hbm_ntm_rebirth.hadron_coil_magtung", "\u81f4\u5bc64000K\u8d85\u5bfc\u7ebf\u5708");
-        add("block.hbm_ntm_rebirth.hadron_coil_schrabidium", "\u81f4\u5bc6Sa326\u7ebf\u5708");
-        add("block.hbm_ntm_rebirth.hadron_coil_schrabidate", "\u81f4\u5bc6Sa\u9178\u94c1\u7ebf\u5708");
-        add("block.hbm_ntm_rebirth.hadron_coil_starmetal", "\u81f4\u5bc6\u661f\u8f89\u7ebf\u5708");
-        add("block.hbm_ntm_rebirth.hadron_coil_chlorophyte", "\u81f4\u5bc6\u53f6\u7eff\u7ebf\u5708");
-        add("block.hbm_ntm_rebirth.hadron_coil_mese", "\u81f4\u5bc6Mese\u7ebf\u5708");
-        add("info.hbm_ntm_rebirth.coil", "\u7ebf\u5708\u5f3a\u5ea6");
         add("block.hbm_ntm_rebirth.machine_cyclotron", "\u56de\u65cb\u52a0\u901f\u5668");
         add("container.cyclotron", "\u56de\u65cb\u52a0\u901f\u5668");
         add("desc.gui.upgrade", "\u00a7l\u53ef\u63a5\u53d7\u7684\u5347\u7ea7\uff1a\u00a7r");
@@ -2381,12 +2373,6 @@ public class HbmZhCnLanguageProvider extends LanguageProvider {
         add("item.mirror_tool.angle", "\u955c\u9762\u89d2\u5ea6\u8fc7\u5c0f\uff01(\u6700\u5c0f\u4e3a45\u00b0)");
         add("block.hbm_ntm_rebirth.machine_tower_small", "\u8f85\u52a9\u51b7\u5374\u5854");
         add("block.hbm_ntm_rebirth.machine_tower_large", "\u51b7\u5374\u5854");
-        add("block.hbm_ntm_rebirth.fan", "\u98ce\u6247");
-        add("block.hbm_ntm_rebirth.fan.desc", "\u4f7f\u7528\u7ea2\u77f3\u6fc0\u6d3b$\u5c06\u5b9e\u4f53\u63a8\u81f3\u6700\u591a10\u4e2a\u65b9\u5757\u5916$\u7528\u87ba\u4e1d\u5200\u53f3\u952e\u70b9\u51fb\u5373\u53ef\u5207\u6362\u6a21\u5f0f");
-        add("block.hbm_ntm_rebirth.fan.falloffOn", "\u98ce\u6247\u529f\u7387\u968f\u8ddd\u79bb\u589e\u52a0\u800c\u51cf\u5c0f");
-        add("block.hbm_ntm_rebirth.fan.falloffOff", "\u7a33\u5b9a\u7684\u98ce\u6247\u529f\u7387");
-        add("block.hbm_ntm_rebirth.fan.suckOn", "\u98ce\u6247\u6b63\u5728\u5438\u6c14");
-        add("block.hbm_ntm_rebirth.fan.suckOff", "\u98ce\u6247\u6b63\u5728\u5439\u98ce");
         add("block.hbm_ntm_rebirth.machine_turbofan", "\u6da1\u6247\u53d1\u52a8\u673a");
         add("block.hbm_ntm_rebirth.machine_turbinegas", "\u8054\u5408\u5faa\u73af\u71c3\u6c14\u8f6e\u673a");
         add("block.hbm_ntm_rebirth.machine_ammo_press", "\u538b\u5f39\u673a");

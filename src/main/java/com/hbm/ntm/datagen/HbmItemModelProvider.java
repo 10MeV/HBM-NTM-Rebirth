@@ -230,7 +230,7 @@ public class HbmItemModelProvider extends ItemModelProvider {
             return;
         }
         if (path.equals("fluid_icon")) {
-            layeredItem(path, "fluid_icon", "fluid_identifier_overlay");
+            generatedItem(path, "fluid_icon");
             return;
         }
         if (path.startsWith("holotape_image_")) {

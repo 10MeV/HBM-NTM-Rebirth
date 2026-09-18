@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building_blocks",
+  "key": {
+    "F": { "item": "minecraft:iron_bars" },
+    "B": { "item": "minecraft:glowstone" }
+  },
+  "pattern": ["FFF", "FBF", "FFF"],
+  "result": { "item": "hbm_ntm_rebirth:reinforced_light" },
+  "show_notification": true
+}

@@ -1,0 +1,20 @@
+{
+  "type": "hbm_ntm_rebirth:anvil_construction",
+  "input": {
+    "ingredient": {
+      "item": "hbm_ntm_rebirth:tape_recorder"
+    }
+  },
+  "outputs": [
+    {
+      "item": "hbm_ntm_rebirth:ingot_steel"
+    },
+    {
+      "item": "hbm_ntm_rebirth:ingot_tungsten",
+      "count": 1,
+      "chance": 0.25
+    }
+  ],
+  "tier_lower": 2,
+  "overlay": "recycling"
+}

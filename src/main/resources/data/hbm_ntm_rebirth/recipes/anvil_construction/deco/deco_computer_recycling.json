@@ -6,8 +6,11 @@
     { "item": "hbm_ntm_rebirth:scrap", "count": 3 },
     { "item": "hbm_ntm_rebirth:wire_fine_copper", "count": 4 },
     { "item": "hbm_ntm_rebirth:circuit_pcb", "count": 2 },
-    { "item": "hbm_ntm_rebirth:circuit_vacuum_tube", "chance": 0.5 }
+    { "item": "hbm_ntm_rebirth:circuit_vacuum_tube", "chance": 0.5 },
+    { "item": "hbm_ntm_rebirth:circuit_capacitor", "chance": 0.75 },
+    { "item": "hbm_ntm_rebirth:circuit_capacitor", "chance": 0.5 },
+    { "item": "hbm_ntm_rebirth:circuit_analog", "chance": 0.1 }
   ],
-  "tier_lower": 3,
+  "tier_lower": 2,
   "overlay": "recycling"
 }

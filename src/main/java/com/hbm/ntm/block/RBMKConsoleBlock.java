@@ -4,7 +4,6 @@ import com.hbm.ntm.api.block.Toolable;
 import com.hbm.ntm.blockentity.RBMKConsoleBlockEntity;
 import com.hbm.ntm.neutron.RBMKPanelBlockPlanner;
 import com.hbm.ntm.multiblock.LegacyMultiblockLayout;
-import com.hbm.ntm.multiblock.LegacyProxyMode;
 import com.hbm.ntm.multiblock.MultiblockHelper;
 import com.hbm.ntm.menu.RBMKConsoleMenu;
 import com.hbm.ntm.registry.ModBlockEntities;
@@ -55,12 +54,12 @@ public class RBMKConsoleBlock extends LegacyXrMultiblockBlock implements EntityB
     @Override
     protected LegacyMultiblockLayout getLayout(BlockState state) {
         Direction facing = state.hasProperty(FACING) ? state.getValue(FACING) : Direction.SOUTH;
-        BlockPos extraOrigin = LegacyMultiblockLayout.relative(facing);
+        // Both legacy fillSpace calls use x + dir * o, i.e. the final core,
+        // as their origin. Shifting the second XR box forward again creates a
+        // spurious third footprint row and makes the source-authentic OBJ look
+        // displaced from its structure dummies.
         return super.getLayout(state)
-                .withLegacyXrProxyFill(LEGACY_EXTRA_DIMENSIONS, facing, extraOrigin, LegacyProxyMode.passive())
-                .withLegacyXrCheckOnly(LEGACY_EXTRA_DIMENSIONS, facing, extraOrigin)
-                .withLegacyExtraOffsets(LegacyMultiblockLayout.legacyXrFillOffsets(
-                        LEGACY_EXTRA_DIMENSIONS, facing, extraOrigin));
+                .withLegacyXrCheckedFill(LEGACY_EXTRA_DIMENSIONS, facing, BlockPos.ZERO);
     }
 
     @Override

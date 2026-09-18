@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": {
+      "item": "hbm_ntm_rebirth:singularity_counter_resonant"
+    },
+    "B": {
+      "item": "hbm_ntm_rebirth:singularity_super_heated"
+    },
+    "C": {
+      "item": "hbm_ntm_rebirth:black_hole"
+    },
+    "X": {
+      "item": "hbm_ntm_rebirth:plate_dineutronium"
+    }
+  },
+  "pattern": [
+    "XBX",
+    "ACA",
+    "XBX"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:singularity_spark"
+  },
+  "show_notification": true
+}

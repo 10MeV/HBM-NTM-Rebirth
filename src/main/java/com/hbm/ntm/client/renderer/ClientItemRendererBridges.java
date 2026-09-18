@@ -132,6 +132,5 @@ public final class ClientItemRendererBridges {
     }
 
     public static void acceptFan(Consumer<IClientItemExtensions> consumer) {
-        LegacyItemRendererBridge.accept(consumer, () -> LegacyFanItemRenderer.INSTANCE);
     }
 }

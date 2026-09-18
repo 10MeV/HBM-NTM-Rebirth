@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "food",
+  "ingredients": [
+    { "tag": "forge:dusts/coal" },
+    { "item": "minecraft:poisonous_potato" },
+    { "item": "minecraft:nether_wart" },
+    { "item": "hbm_ntm_rebirth:plant_flower_foxglove" }
+  ],
+  "result": { "item": "hbm_ntm_rebirth:pill_herbal" }
+}

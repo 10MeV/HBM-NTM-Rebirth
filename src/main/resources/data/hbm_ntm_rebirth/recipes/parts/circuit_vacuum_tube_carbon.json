@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": { "tag": "forge:glass_panes" },
+    "W": { "tag": "forge:wires/carbon" },
+    "I": { "item": "hbm_ntm_rebirth:plate_polymer" }
+  },
+  "pattern": ["G", "W", "I"],
+  "result": { "item": "hbm_ntm_rebirth:circuit_vacuum_tube" },
+  "show_notification": true
+}

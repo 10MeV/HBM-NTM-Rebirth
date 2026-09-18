@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "tag": "forge:bolts/steel"
+    },
+    "P": {
+      "tag": "forge:plates/steel"
+    }
+  },
+  "pattern": [
+    " P ",
+    "PBP",
+    "PPP"
+  ],
+  "result": {
+    "item": "hbm_ntm_rebirth:padlock"
+  },
+  "show_notification": true
+}

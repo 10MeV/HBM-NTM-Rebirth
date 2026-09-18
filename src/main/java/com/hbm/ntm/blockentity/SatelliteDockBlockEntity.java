@@ -59,6 +59,7 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
             setChanged();
         }
     };
+    private final LazyOptional<IItemHandler> menuItemHandler = LazyOptional.of(() -> items);
     private final LazyOptional<IItemHandler> itemHandler =
             LazyOptional.of(() -> new ExtractOnlySidedItemHandler(items, OUTPUT_SLOTS));
     private String customName;
@@ -231,13 +232,17 @@ public class SatelliteDockBlockEntity extends BlockEntity implements MenuProvide
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
+        menuItemHandler.invalidate();
         itemHandler.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            // A null side is the complete menu/internal view.  Physical sides
+            // expose only the fifteen cargo/output slots; the satellite chip
+            // slot is intentionally never visible to external automation.
+            return side == null ? menuItemHandler.cast() : itemHandler.cast();
         }
         return super.getCapability(capability, side);
     }

@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "S": { "tag": "forge:plates/steel" },
+    "C": { "tag": "forge:circuits/advanced" },
+    "L": { "tag": "forge:plates/lead" },
+    "W": { "item": "hbm_ntm_rebirth:coil_copper" }
+  },
+  "pattern": ["SCS", "LWL", "SCS"],
+  "result": { "item": "hbm_ntm_rebirth:machine_reactor_breeding" },
+  "show_notification": true
+}

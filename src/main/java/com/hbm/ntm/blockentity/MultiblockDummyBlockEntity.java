@@ -418,7 +418,7 @@ public class MultiblockDummyBlockEntity extends BlockEntity implements HbmEnergy
         if (level == null || core == null) {
             return InteractionResult.PASS;
         }
-        return core.state().use(level, player, hand, hit.withPosition(core.pos()));
+        return core.state().use(level, player, hand, hit);
     }
 
     public void setDropCoreOnRemoval(boolean dropCoreOnRemoval) {
