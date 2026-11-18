@@ -100,7 +100,9 @@ public class TurbofanBlockEntity extends HbmEnergyAndFluidBlockEntity
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
+    // TileEntityMachineBase exposes no slots to sided automation. The complete
+    // inventory is reserved for the unsided menu/internal capability query.
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
 
     private int afterburner;
     private boolean wasOn;
@@ -595,7 +597,7 @@ public class TurbofanBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        itemHandler.invalidate();
+        internalItemHandler.invalidate();
     }
 
     @Override
@@ -603,44 +605,9 @@ public class TurbofanBlockEntity extends HbmEnergyAndFluidBlockEntity
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
             // TileEntityMachineTurbofan inherits TileEntityMachineBase's empty
             // ISidedInventory contract. Its GUI inventory is not pipe-accessible.
-            return side == null ? itemHandler.cast() : LazyOptional.empty();
+            return side == null ? internalItemHandler.cast() : LazyOptional.empty();
         }
         return super.getCapability(capability, side);
     }
 
-    private final class AccessibleItemHandler implements IItemHandler {
-        @Override
-        public int getSlots() {
-            return SLOT_COUNT;
-        }
-
-        @Override
-        public @NotNull ItemStack getStackInSlot(int slot) {
-            return slot >= 0 && slot < SLOT_COUNT ? items.getStackInSlot(slot) : ItemStack.EMPTY;
-        }
-
-        @Override
-        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
-            return switch (slot) {
-                case SLOT_FLUID_INPUT, SLOT_AFTERBURN, SLOT_BATTERY, SLOT_IDENTIFIER ->
-                        items.insertItem(slot, stack, simulate);
-                default -> stack;
-            };
-        }
-
-        @Override
-        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
-            return slot == SLOT_FLUID_OUTPUT ? items.extractItem(slot, amount, simulate) : ItemStack.EMPTY;
-        }
-
-        @Override
-        public int getSlotLimit(int slot) {
-            return slot >= 0 && slot < SLOT_COUNT ? items.getSlotLimit(slot) : 0;
-        }
-
-        @Override
-        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return slot >= 0 && slot < SLOT_COUNT && items.isItemValid(slot, stack);
-        }
-    }
 }

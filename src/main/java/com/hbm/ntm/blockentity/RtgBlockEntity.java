@@ -54,6 +54,7 @@ public class RtgBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler(items));
     private int heat;
     private String customName;
@@ -130,7 +131,7 @@ public class RtgBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability,
             @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? internalItemHandler : itemHandler).cast();
         }
         return super.getCapability(capability, side);
     }
@@ -138,6 +139,7 @@ public class RtgBlockEntity extends HbmEnergyBlockEntity implements MenuProvider
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
+        internalItemHandler.invalidate();
         itemHandler.invalidate();
     }
 

@@ -89,8 +89,7 @@ public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
             LazyOptional.of(() -> new AccessibleItemHandler(TOP_BOTTOM_SLOTS));
     private final LazyOptional<IItemHandler> sideItemHandler =
             LazyOptional.of(() -> new AccessibleItemHandler(SIDE_SLOTS));
-    private final LazyOptional<IItemHandler> nullSideItemHandler =
-            LazyOptional.of(() -> new AccessibleItemHandler(UNSIDED_SLOTS));
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
     private int muon;
 
     public ICFPressBlockEntity(BlockPos pos, BlockState state) {
@@ -236,7 +235,7 @@ public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
         super.invalidateCaps();
         topBottomItemHandler.invalidate();
         sideItemHandler.invalidate();
-        nullSideItemHandler.invalidate();
+        internalItemHandler.invalidate();
     }
 
     @Override
@@ -245,7 +244,7 @@ public class ICFPressBlockEntity extends HbmFluidNetworkBlockEntity
             if (side == Direction.UP || side == Direction.DOWN) {
                 return topBottomItemHandler.cast();
             }
-            return side == null ? nullSideItemHandler.cast() : sideItemHandler.cast();
+            return side == null ? internalItemHandler.cast() : sideItemHandler.cast();
         }
         return super.getCapability(capability, side);
     }

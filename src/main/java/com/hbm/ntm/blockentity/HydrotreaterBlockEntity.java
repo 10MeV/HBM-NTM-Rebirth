@@ -15,12 +15,19 @@ import com.hbm.ntm.registry.ModBlockEntities;
 import com.hbm.ntm.registry.ModItems;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class HydrotreaterBlockEntity extends LegacyRemoteFluidMachineBlockEntity {
     public static final int SLOT_BATTERY = 0;
@@ -42,6 +49,8 @@ public class HydrotreaterBlockEntity extends LegacyRemoteFluidMachineBlockEntity
     private final HbmFluidTank hydrogenTank;
     private final HbmFluidTank desulfurizedOilTank;
     private final HbmFluidTank sourGasTank;
+    private final LazyOptional<IItemHandler> internalItemHandler =
+            LazyOptional.of(() -> java.util.Objects.requireNonNull(getItems()));
 
     public HydrotreaterBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state,
@@ -237,5 +246,19 @@ public class HydrotreaterBlockEntity extends LegacyRemoteFluidMachineBlockEntity
         LegacyFluidTankPacket.read(data, hydrogenTank);
         LegacyFluidTankPacket.read(data, desulfurizedOilTank);
         LegacyFluidTankPacket.read(data, sourGasTank);
+    }
+
+    @Override
+    public void invalidateCaps() {
+        super.invalidateCaps();
+        internalItemHandler.invalidate();
+    }
+
+    @Override
+    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
+        if (capability == ForgeCapabilities.ITEM_HANDLER) {
+            return side == null ? internalItemHandler.cast() : LazyOptional.empty();
+        }
+        return super.getCapability(capability, side);
     }
 }

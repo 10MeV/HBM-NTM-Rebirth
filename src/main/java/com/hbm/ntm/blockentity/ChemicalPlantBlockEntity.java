@@ -179,6 +179,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
             inputTanks[0], inputTanks[1], inputTanks[2],
             outputTanks[0], outputTanks[1], outputTanks[2]);
     private final HbmFluidPortSubscriptionTracker fluidPortSubscriptions = new HbmFluidPortSubscriptionTracker();
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new ChemicalPlantAccessibleItemHandler());
     private final LazyOptional<IEnergyStorage> energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
     private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(() ->
@@ -611,6 +612,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
+        internalItemHandler.invalidate();
         itemHandler.invalidate();
         energyHandler.invalidate();
         fluidHandler.invalidate();
@@ -620,7 +622,7 @@ public class ChemicalPlantBlockEntity extends BlockEntity implements MenuProvide
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return side == null ? internalItemHandler.cast() : itemHandler.cast();
         }
         if (capability == ForgeCapabilities.ENERGY) {
             return energyHandler.cast();

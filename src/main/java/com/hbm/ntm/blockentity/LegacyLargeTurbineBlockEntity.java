@@ -77,7 +77,8 @@ public class LegacyLargeTurbineBlockEntity extends LegacySteamTurbineBlockEntity
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> externalItemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
     private float rotor;
     private float lastRotor;
     private float fanAcceleration;
@@ -130,7 +131,11 @@ public class LegacyLargeTurbineBlockEntity extends LegacySteamTurbineBlockEntity
         int maxInputMb = 0;
         if (trait != null && trait.getAmountRequired() > 0) {
             int inputOps = inputTank.getFill() / trait.getAmountRequired();
-            int cappedOps = (int) Math.ceil(inputOps * CONSUMPTION_PERCENT);
+            // TileEntityMachineLargeTurbine used:
+            // ceil(inputFill / amountReq / 5F). Keep the integer division before
+            // the 20% cap; applying the cap to raw millibuckets changes the
+            // result at partial-operation boundaries.
+            int cappedOps = (int) Math.ceil(inputOps / 5.0F);
             maxInputMb = cappedOps * trait.getAmountRequired();
         }
         return HbmTurbineConversion.run(inputTank, outputTank, getEfficiency(), maxInputMb, false);
@@ -306,13 +311,14 @@ public class LegacyLargeTurbineBlockEntity extends LegacySteamTurbineBlockEntity
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        itemHandler.invalidate();
+        internalItemHandler.invalidate();
+        externalItemHandler.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
-        if (capability == ForgeCapabilities.ITEM_HANDLER && side == null) {
-            return itemHandler.cast();
+        if (capability == ForgeCapabilities.ITEM_HANDLER) {
+            return (side == null ? internalItemHandler : externalItemHandler).cast();
         }
         return super.getCapability(capability, side);
     }
@@ -340,7 +346,10 @@ public class LegacyLargeTurbineBlockEntity extends LegacySteamTurbineBlockEntity
 
         @Override
         public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
-            return ItemStack.EMPTY;
+            return slot == SLOT_IDENTIFIER_OUTPUT || slot == SLOT_INPUT_CONTAINER_OUTPUT
+                    || slot == SLOT_OUTPUT_CONTAINER_OUTPUT
+                    ? items.extractItem(slot, amount, simulate)
+                    : ItemStack.EMPTY;
         }
 
         @Override

@@ -86,7 +86,10 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new ExternalItemHandler(items));
+    // Menus and internal logic require the mold slot plus all output slots; sided
+    // automation is intentionally limited to completed casting output.
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> externalItemHandler = LazyOptional.of(() -> new ExternalItemHandler(items));
     private final LazyOptional<IFluidHandler> proxyFluidHandler;
     private final ICapabilityProvider fluidDelegate;
     private final List<HbmFluidTank> receivingTanks;
@@ -334,7 +337,8 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        itemHandler.invalidate();
+        internalItemHandler.invalidate();
+        externalItemHandler.invalidate();
         proxyFluidHandler.invalidate();
     }
 
@@ -342,7 +346,7 @@ public class StrandCasterBlockEntity extends HbmFluidBlockEntity
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability,
             @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return side == null ? internalItemHandler.cast() : externalItemHandler.cast();
         }
         return super.getCapability(capability, side);
     }

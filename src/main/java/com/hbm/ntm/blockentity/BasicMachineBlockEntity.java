@@ -93,6 +93,7 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
             return super.insertItem(slot, stack, simulate);
         }
     };
+    private final LazyOptional<IItemHandler> internalItems = LazyOptional.of(() -> items);
     private final LazyOptional<IItemHandler> automationItems = LazyOptional.of(() -> new AccessibleItemHandler());
 
     private int burnTime;
@@ -397,13 +398,14 @@ public class BasicMachineBlockEntity extends BlockEntity implements MenuProvider
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
+        internalItems.invalidate();
         automationItems.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return automationItems.cast();
+            return (side == null ? internalItems : automationItems).cast();
         }
         return super.getCapability(capability, side);
     }

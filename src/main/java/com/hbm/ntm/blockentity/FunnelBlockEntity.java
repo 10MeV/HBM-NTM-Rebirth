@@ -61,7 +61,7 @@ public class FunnelBlockEntity extends BlockEntity implements MenuProvider, HbmL
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
-    private final LazyOptional<IItemHandler> menuItemHandler = LazyOptional.of(AccessibleItemHandler::new);
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
     private final LazyOptional<IItemHandler> topItemHandler = LazyOptional.of(() -> new SidedItemHandler(Direction.UP));
     private final LazyOptional<IItemHandler> bottomItemHandler = LazyOptional.of(() -> new SidedItemHandler(Direction.DOWN));
     private final LazyOptional<IItemHandler> sideItemHandler = LazyOptional.of(() -> new SidedItemHandler(Direction.NORTH));
@@ -230,7 +230,7 @@ public class FunnelBlockEntity extends BlockEntity implements MenuProvider, HbmL
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        menuItemHandler.invalidate();
+        internalItemHandler.invalidate();
         topItemHandler.invalidate();
         bottomItemHandler.invalidate();
         sideItemHandler.invalidate();
@@ -240,7 +240,7 @@ public class FunnelBlockEntity extends BlockEntity implements MenuProvider, HbmL
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
             if (side == null) {
-                return menuItemHandler.cast();
+                return internalItemHandler.cast();
             }
             if (side == Direction.UP) {
                 return topItemHandler.cast();

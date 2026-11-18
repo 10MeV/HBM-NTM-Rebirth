@@ -103,8 +103,14 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
         protected void onContentsChanged(int slot) {
             setChanged();
         }
+
+        @Override
+        public boolean isItemValid(int slot, ItemStack stack) {
+            return isValidForInternalItemSlot(slot, stack);
+        }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(this::getExternalItemHandler);
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> externalItemHandler = LazyOptional.of(this::getExternalItemHandler);
 
     private int mode = MODE_INPUT;
     private boolean exploded;
@@ -345,6 +351,14 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
 
     protected IItemHandler getExternalItemHandler() {
         return EmptyItemHandler.INSTANCE;
+    }
+
+    /**
+     * Allows a concrete legacy machine to preserve its old menu-slot insertion
+     * contract while the shared inventory remains usable by the menu.
+     */
+    protected boolean isValidForInternalItemSlot(int slot, ItemStack stack) {
+        return true;
     }
 
     protected IItemHandler getTankContainerAutomationItemHandler() {
@@ -755,7 +769,8 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        itemHandler.invalidate();
+        internalItemHandler.invalidate();
+        externalItemHandler.invalidate();
     }
 
     @Override
@@ -795,7 +810,7 @@ public class FluidTankBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? internalItemHandler : externalItemHandler).cast();
         }
         return super.getCapability(capability, side);
     }

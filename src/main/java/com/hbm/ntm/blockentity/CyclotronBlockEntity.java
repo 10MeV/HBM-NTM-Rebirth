@@ -117,6 +117,9 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
         }
 
     };
+    // Null-sided access is the complete internal/menu inventory.  Every actual
+    // block face continues through the legacy-shaped external delegates below.
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(CoreItemHandler::new);
     private final LazyOptional<IItemHandler>[] laneItemHandlers;
     private final LazyOptional<IEnergyStorage> energyHandler =
@@ -612,6 +615,7 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
+        internalItemHandler.invalidate();
         itemHandler.invalidate();
         energyHandler.invalidate();
         proxyFluidCapability.invalidate();
@@ -623,7 +627,7 @@ public class CyclotronBlockEntity extends HbmFluidNetworkBlockEntity implements 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? internalItemHandler : itemHandler).cast();
         }
         if (capability == ForgeCapabilities.ENERGY) {
             return energyHandler.cast();

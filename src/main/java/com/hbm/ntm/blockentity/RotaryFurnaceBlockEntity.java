@@ -134,7 +134,9 @@ public class RotaryFurnaceBlockEntity extends HbmFluidBlockEntity
             return ItemStack.EMPTY;
         }
     };
-    private final LazyOptional<IItemHandler> coreItemHandler = LazyOptional.empty();
+    // A null side is Forge's internal/menu view. The physical core has no item
+    // automation face, so non-null side requests remain denied below.
+    private final LazyOptional<IItemHandler> coreItemHandler = LazyOptional.of(() -> items);
     private final IItemHandler input0Handler = new InsertOnlySlotHandler(SLOT_INPUT_0);
     private final IItemHandler input1Handler = new InsertOnlySlotHandler(SLOT_INPUT_1);
     private final IItemHandler input2Handler = new InsertOnlySlotHandler(SLOT_INPUT_2);

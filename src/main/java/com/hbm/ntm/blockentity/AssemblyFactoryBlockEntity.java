@@ -162,7 +162,10 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
     private final List<HbmFluidTank> coolingReceivingTankList = List.of(water);
     private final List<HbmFluidTank> coolingSendingTankList = List.of(spentSteam);
     private final List<HbmFluidTank> coolingAllTankList = List.of(water, spentSteam);
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new MappedItemHandler(allExternalSlots()));
+    /** Full inventory capability for menu/internal callers (side == null only). */
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
+    /** Legacy ISidedInventory input/output mapping for external automation. */
+    private final LazyOptional<IItemHandler> externalItemHandler = LazyOptional.of(() -> new MappedItemHandler(allExternalSlots()));
     private final LazyOptional<IEnergyStorage> energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
     private final LazyOptional<IFluidHandler> fluidHandler;
     private final CapabilityDelegate coolingDelegate;
@@ -659,7 +662,8 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        itemHandler.invalidate();
+        internalItemHandler.invalidate();
+        externalItemHandler.invalidate();
         energyHandler.invalidate();
         fluidHandler.invalidate();
         coolingDelegate.invalidate();
@@ -671,7 +675,7 @@ public class AssemblyFactoryBlockEntity extends BlockEntity implements MenuProvi
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? internalItemHandler : externalItemHandler).cast();
         }
         if (capability == ForgeCapabilities.ENERGY) {
             return energyHandler.cast();

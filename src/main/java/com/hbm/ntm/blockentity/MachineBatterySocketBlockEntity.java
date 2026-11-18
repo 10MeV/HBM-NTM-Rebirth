@@ -787,11 +787,10 @@ public class MachineBatterySocketBlockEntity extends HbmEnergyNetworkBlockEntity
         }
 
         private boolean canExtractBattery(ItemStack stack) {
-            return switch (getCurrentMode()) {
-                case MODE_OUTPUT -> HbmBatteryTransfer.isEmptyBattery(stack);
-                case MODE_INPUT -> HbmBatteryTransfer.isFullBattery(stack);
-                default -> false;
-            };
+            // TileEntityBatterySocket#canExtractItem compared the sole slot index
+            // against mode_input/mode_output. With slot 0, its actual legacy
+            // contract permits extraction only for a full battery in input mode.
+            return getCurrentMode() == MODE_INPUT && HbmBatteryTransfer.isFullBattery(stack);
         }
 
         @Override

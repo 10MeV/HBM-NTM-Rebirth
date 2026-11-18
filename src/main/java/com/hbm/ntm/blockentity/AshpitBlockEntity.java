@@ -57,7 +57,10 @@ public class AshpitBlockEntity extends BlockEntity implements MenuProvider, HbmL
             setChanged();
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    /** Full inventory capability for menu/internal callers (side == null only). */
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
+    /** Legacy ISidedInventory contract: every ash slot is output-only. */
+    private final LazyOptional<IItemHandler> externalItemHandler = LazyOptional.of(ExtractionOnlyItemHandler::new);
     private final HbmLegacyLoadedTileState legacyLoadedTile = new HbmLegacyLoadedTileState();
 
     private int ashLevelWood;
@@ -296,15 +299,48 @@ public class AshpitBlockEntity extends BlockEntity implements MenuProvider, HbmL
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        itemHandler.invalidate();
+        internalItemHandler.invalidate();
+        externalItemHandler.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? internalItemHandler : externalItemHandler).cast();
         }
         return super.getCapability(capability, side);
+    }
+
+    private final class ExtractionOnlyItemHandler implements IItemHandler {
+        @Override
+        public int getSlots() {
+            return SLOT_COUNT;
+        }
+
+        @Override
+        public @NotNull ItemStack getStackInSlot(int slot) {
+            return slot >= 0 && slot < SLOT_COUNT ? items.getStackInSlot(slot) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            return stack;
+        }
+
+        @Override
+        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+            return slot >= 0 && slot < SLOT_COUNT ? items.extractItem(slot, amount, simulate) : ItemStack.EMPTY;
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return slot >= 0 && slot < SLOT_COUNT ? items.getSlotLimit(slot) : 0;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return false;
+        }
     }
 
     @Override

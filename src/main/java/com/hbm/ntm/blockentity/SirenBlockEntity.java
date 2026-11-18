@@ -41,6 +41,7 @@ public class SirenBlockEntity extends BlockEntity implements MenuProvider {
             setChanged();
         }
     };
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
     private final LazyOptional<IItemHandler> externalItemHandler = LazyOptional.of(() -> new SirenExternalItemHandler(items));
     private boolean lock;
     private String customName;
@@ -120,6 +121,7 @@ public class SirenBlockEntity extends BlockEntity implements MenuProvider {
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
+        internalItemHandler.invalidate();
         externalItemHandler.invalidate();
     }
 
@@ -127,7 +129,7 @@ public class SirenBlockEntity extends BlockEntity implements MenuProvider {
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability,
             @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return externalItemHandler.cast();
+            return (side == null ? internalItemHandler : externalItemHandler).cast();
         }
         return super.getCapability(capability, side);
     }

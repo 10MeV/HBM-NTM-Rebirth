@@ -64,7 +64,7 @@ public class BrickFurnaceBlockEntity extends BlockEntity implements MenuProvider
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
     private final Map<Direction, LazyOptional<IItemHandler>> sidedItemHandlers = new EnumMap<>(Direction.class);
 
     private int burnTime;
@@ -253,7 +253,7 @@ public class BrickFurnaceBlockEntity extends BlockEntity implements MenuProvider
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        itemHandler.invalidate();
+        internalItemHandler.invalidate();
         sidedItemHandlers.values().forEach(LazyOptional::invalidate);
         sidedItemHandlers.clear();
     }
@@ -261,7 +261,7 @@ public class BrickFurnaceBlockEntity extends BlockEntity implements MenuProvider
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return side == null ? itemHandler.cast()
+            return side == null ? internalItemHandler.cast()
                     : sidedItemHandlers.computeIfAbsent(side, direction -> LazyOptional.of(
                             () -> new AccessibleItemHandler(direction))).cast();
         }

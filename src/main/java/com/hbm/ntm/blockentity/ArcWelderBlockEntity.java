@@ -132,7 +132,10 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
     private final HbmEnergyStorage energy = new HbmEnergyStorage(DEFAULT_MAX_POWER, DEFAULT_MAX_POWER, 0L);
     private final HbmFluidTank inputTank = new HbmFluidTank(HbmFluids.NONE, TANK_CAPACITY);
     private final List<HbmFluidTank> inputTankList = List.of(inputTank);
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() ->
+    /** Full inventory capability for menu/internal callers (side == null only). */
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
+    /** Core's legacy ISidedInventory view: middle input and product output only. */
+    private final LazyOptional<IItemHandler> externalItemHandler = LazyOptional.of(() ->
             new ArcWelderAccessibleItemHandler(SLOT_INPUT_1, SLOT_OUTPUT));
     private final LazyOptional<IEnergyStorage> energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
     private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(() ->
@@ -638,7 +641,8 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        itemHandler.invalidate();
+        internalItemHandler.invalidate();
+        externalItemHandler.invalidate();
         energyHandler.invalidate();
         fluidHandler.invalidate();
         redProxyDelegate.invalidate();
@@ -649,7 +653,7 @@ public class ArcWelderBlockEntity extends BlockEntity implements MenuProvider, H
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? internalItemHandler : externalItemHandler).cast();
         }
         if (capability == ForgeCapabilities.ENERGY) {
             return energyHandler.cast();

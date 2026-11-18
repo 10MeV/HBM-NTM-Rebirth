@@ -38,8 +38,6 @@ public class SatelliteLinkerBlockEntity extends BlockEntity implements MenuProvi
 
     private static final String TAG_INVENTORY = "Inventory";
     private static final String TAG_CUSTOM_NAME = "name";
-    private static final int[] SLOTS_ALL = new int[] { SLOT_SOURCE, SLOT_TARGET, SLOT_RANDOMIZE };
-
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
@@ -54,8 +52,7 @@ public class SatelliteLinkerBlockEntity extends BlockEntity implements MenuProvi
             setChanged();
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler =
-            LazyOptional.of(() -> new ExtractOnlySidedItemHandler(items, SLOTS_ALL));
+    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
     private String customName;
 
     public SatelliteLinkerBlockEntity(BlockPos pos, BlockState state) {
@@ -171,50 +168,4 @@ public class SatelliteLinkerBlockEntity extends BlockEntity implements MenuProvi
         return super.getCapability(capability, side);
     }
 
-    private static final class ExtractOnlySidedItemHandler implements IItemHandler {
-        private final ItemStackHandler items;
-        private final int[] slots;
-
-        private ExtractOnlySidedItemHandler(ItemStackHandler items, int[] slots) {
-            this.items = items;
-            this.slots = slots;
-        }
-
-        @Override
-        public int getSlots() {
-            return slots.length;
-        }
-
-        @Override
-        public @NotNull ItemStack getStackInSlot(int slot) {
-            return items.getStackInSlot(mapSlot(slot));
-        }
-
-        @Override
-        public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
-            return stack;
-        }
-
-        @Override
-        public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
-            return items.extractItem(mapSlot(slot), amount, simulate);
-        }
-
-        @Override
-        public int getSlotLimit(int slot) {
-            return items.getSlotLimit(mapSlot(slot));
-        }
-
-        @Override
-        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return false;
-        }
-
-        private int mapSlot(int slot) {
-            if (slot < 0 || slot >= slots.length) {
-                throw new IndexOutOfBoundsException(slot);
-            }
-            return slots[slot];
-        }
-    }
 }

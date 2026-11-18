@@ -150,7 +150,10 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     private final List<HbmFluidTank> outputTankList = List.of(outputTank);
     private final List<HbmFluidTank> allTankList = List.of(inputTank, outputTank);
     private final HbmFluidPortSubscriptionTracker fluidPortSubscriptions = new HbmFluidPortSubscriptionTracker();
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AssemblyAccessibleItemHandler());
+    /** Full inventory capability for menu/internal callers (side == null only). */
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
+    /** Legacy ISidedInventory input/output mapping for external automation. */
+    private final LazyOptional<IItemHandler> externalItemHandler = LazyOptional.of(AssemblyAccessibleItemHandler::new);
     private final LazyOptional<IEnergyStorage> energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
     private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(() ->
             ForgeRecipeFluidHandlerAdapter.create(inputTankList, outputTankList, 0,
@@ -609,7 +612,8 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        itemHandler.invalidate();
+        internalItemHandler.invalidate();
+        externalItemHandler.invalidate();
         energyHandler.invalidate();
         fluidHandler.invalidate();
     }
@@ -617,7 +621,7 @@ public class AssemblyMachineBlockEntity extends BlockEntity implements MenuProvi
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? internalItemHandler : externalItemHandler).cast();
         }
         if (capability == ForgeCapabilities.ENERGY) {
             return energyHandler.cast();

@@ -92,6 +92,7 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
         }
     };
 
+    private final LazyOptional<IItemHandler> internalItems = LazyOptional.of(() -> items);
     private final LazyOptional<IItemHandler> automationItems = LazyOptional.of(AccessibleItemHandler::new);
     private int progress;
     private int maxProgress = 100;
@@ -331,13 +332,14 @@ public class ElectricFurnaceBlockEntity extends HbmEnergyBlockEntity
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
+        internalItems.invalidate();
         automationItems.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return automationItems.cast();
+            return (side == null ? internalItems : automationItems).cast();
         }
         return super.getCapability(capability, side);
     }

@@ -105,7 +105,8 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
     private final List<HbmFluidTank> inputTankList;
     private final List<HbmFluidTank> outputTankList;
     private final List<HbmFluidTank> allTankList;
-    private final LazyOptional<IItemHandler> itemHandler;
+    private final LazyOptional<IItemHandler> internalItemHandler;
+    private final LazyOptional<IItemHandler> externalItemHandler;
     private final LazyOptional<IEnergyStorage> energyHandler;
     private final LazyOptional<IFluidHandler> fluidHandler;
     private final LazyOptional<IFluidHandler> allFluidHandler;
@@ -150,7 +151,8 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
         this.inputTankList = Arrays.asList(inputTanks);
         this.outputTankList = Arrays.asList(outputTanks);
         this.allTankList = java.util.stream.Stream.concat(inputTankList.stream(), outputTankList.stream()).toList();
-        this.itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
+        this.internalItemHandler = LazyOptional.of(() -> items);
+        this.externalItemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
         this.energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
         this.fluidHandler = LazyOptional.of(() -> ForgeRecipeFluidHandlerAdapter.create(inputTankList,
                 outputTankList, 0, this::onFluidContentsChanged));
@@ -868,7 +870,8 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        itemHandler.invalidate();
+        internalItemHandler.invalidate();
+        externalItemHandler.invalidate();
         energyHandler.invalidate();
         fluidHandler.invalidate();
         allFluidHandler.invalidate();
@@ -877,7 +880,7 @@ public class LegacyGenericSelectorMachineBlockEntity extends BlockEntity impleme
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? internalItemHandler : externalItemHandler).cast();
         }
         if (capability == ForgeCapabilities.ENERGY) {
             return energyHandler.cast();

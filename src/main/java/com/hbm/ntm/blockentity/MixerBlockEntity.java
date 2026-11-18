@@ -95,7 +95,8 @@ public class MixerBlockEntity extends HbmEnergyAndFluidBlockEntity
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> externalItemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
     private final LazyOptional<IEnergyStorage> energyInput =
             LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
 
@@ -575,14 +576,15 @@ public class MixerBlockEntity extends HbmEnergyAndFluidBlockEntity
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        itemHandler.invalidate();
+        internalItemHandler.invalidate();
+        externalItemHandler.invalidate();
         energyInput.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? internalItemHandler : externalItemHandler).cast();
         }
         if (capability == ForgeCapabilities.ENERGY) {
             return energyInput.cast();

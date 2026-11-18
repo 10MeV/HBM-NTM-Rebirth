@@ -95,6 +95,7 @@ public class SawmillBlockEntity extends BlockEntity
             return slot == SLOT_INPUT && canAcceptInput(stack);
         }
     };
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(AccessibleItemHandler::new);
 
     private int heat;
@@ -577,13 +578,14 @@ public class SawmillBlockEntity extends BlockEntity
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
+        internalItemHandler.invalidate();
         itemHandler.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? internalItemHandler : itemHandler).cast();
         }
         return super.getCapability(capability, side);
     }

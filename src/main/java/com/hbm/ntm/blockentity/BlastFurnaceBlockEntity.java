@@ -103,7 +103,10 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler(items));
+    /** Full inventory capability for menu/internal callers (side == null only). */
+    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
+    /** Legacy ISidedInventory ordering and automation permissions for external callers. */
+    private final LazyOptional<IItemHandler> externalItemHandler = LazyOptional.of(AccessibleItemHandler::new);
 
     private boolean progressing;
     private float progress;
@@ -319,7 +322,7 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability,
             @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? itemHandler : externalItemHandler).cast();
         }
         return super.getCapability(capability, side);
     }
@@ -328,6 +331,7 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
     public void invalidateCaps() {
         super.invalidateCaps();
         itemHandler.invalidate();
+        externalItemHandler.invalidate();
     }
 
     @Override
@@ -604,12 +608,32 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
         return ports;
     }
 
-    private static final class AccessibleItemHandler implements IItemHandler {
-        private final IItemHandlerModifiable items;
-
-        private AccessibleItemHandler(IItemHandlerModifiable items) {
-            this.items = items;
+    private boolean canInsertExternalItem(int slot, ItemStack stack) {
+        if (stack.isEmpty()) {
+            return false;
         }
+        if (slot == SLOT_FUEL) {
+            return items.isItemValid(slot, stack);
+        }
+        if (slot != SLOT_INPUT_1 && slot != SLOT_INPUT_2) {
+            return false;
+        }
+
+        int otherSlot = slot == SLOT_INPUT_1 ? SLOT_INPUT_2 : SLOT_INPUT_1;
+        // Legacy ItemStack#isItemEqual checks item and damage, but not NBT.
+        if (ItemStack.isSameItem(stack, items.getStackInSlot(otherSlot))) {
+            return false;
+        }
+        if (level == null) {
+            return false;
+        }
+        return level.getRecipeManager().getAllRecipesFor(ModRecipes.BLAST_FURNACE.type().get()).stream()
+                .flatMap(recipe -> recipe.inputs().stream())
+                .anyMatch(input -> input.test(stack));
+    }
+
+    private final class AccessibleItemHandler implements IItemHandler {
+        private final IItemHandlerModifiable items = BlastFurnaceBlockEntity.this.items;
 
         @Override
         public int getSlots() {
@@ -625,12 +649,7 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
         @Override
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
             int mapped = map(slot);
-            if (mapped != SLOT_FUEL && mapped != SLOT_INPUT_1 && mapped != SLOT_INPUT_2) {
-                return stack;
-            }
-            if ((mapped == SLOT_INPUT_1 && ItemStack.isSameItemSameTags(stack, items.getStackInSlot(SLOT_INPUT_2)))
-                    || (mapped == SLOT_INPUT_2
-                    && ItemStack.isSameItemSameTags(stack, items.getStackInSlot(SLOT_INPUT_1)))) {
+            if (!canInsertExternalItem(mapped, stack)) {
                 return stack;
             }
             return items.insertItem(mapped, stack, simulate);
@@ -653,7 +672,7 @@ public class BlastFurnaceBlockEntity extends HbmFluidBlockEntity
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             int mapped = map(slot);
-            return mapped >= 0 && items.isItemValid(mapped, stack);
+            return mapped >= 0 && canInsertExternalItem(mapped, stack);
         }
 
         private int map(int slot) {

@@ -164,6 +164,9 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
     private final List<HbmFluidTank> coolingReceivingTankList = List.of(water);
     private final List<HbmFluidTank> coolingSendingTankList = List.of(spentSteam);
     private final List<HbmFluidTank> coolingAllTankList = List.of(water, spentSteam);
+    /** Full 32-slot inventory for the menu and internal callers (side == null only). */
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
+    /** Legacy ISidedInventory view for pipes and other external automation. */
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new MappedItemHandler(allExternalSlots()));
     private final LazyOptional<IEnergyStorage> energyHandler = LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
     private final LazyOptional<IFluidHandler> fluidHandler;
@@ -679,6 +682,7 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
+        internalItemHandler.invalidate();
         itemHandler.invalidate();
         energyHandler.invalidate();
         fluidHandler.invalidate();
@@ -691,7 +695,7 @@ public class ChemicalFactoryBlockEntity extends BlockEntity implements MenuProvi
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? internalItemHandler : itemHandler).cast();
         }
         if (capability == ForgeCapabilities.ENERGY) {
             return energyHandler.cast();

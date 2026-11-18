@@ -79,7 +79,10 @@ public class StorageDrumBlockEntity extends HbmFluidNetworkBlockEntity
             return canInsert(stack);
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
+    // The unsided capability is the complete inventory for the menu and internal callers.
+    // Automation must use the filtered facade below, matching legacy ISidedInventory rules.
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> externalItemHandler = LazyOptional.of(AccessibleItemHandler::new);
 
     public StorageDrumBlockEntity(BlockPos pos, BlockState state) {
         this(pos, state, new HbmFluidTank(HbmFluids.WASTEFLUID, TANK_CAPACITY),
@@ -213,13 +216,14 @@ public class StorageDrumBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        itemHandler.invalidate();
+        internalItemHandler.invalidate();
+        externalItemHandler.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return side == null ? internalItemHandler.cast() : externalItemHandler.cast();
         }
         return super.getCapability(capability, side);
     }

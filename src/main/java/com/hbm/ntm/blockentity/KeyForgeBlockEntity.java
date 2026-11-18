@@ -41,7 +41,8 @@ public class KeyForgeBlockEntity extends BlockEntity implements MenuProvider {
         }
     };
     private final LazyOptional<IItemHandler> menuItems = LazyOptional.of(() -> items);
-    private final LazyOptional<IItemHandler> topItems = LazyOptional.of(() -> new ExtractionOnlySideHandler(SLOT_SOURCE));
+    // The source key is an input/template, never an automation output.
+    private final LazyOptional<IItemHandler> topItems = LazyOptional.empty();
     private final LazyOptional<IItemHandler> bottomItems = LazyOptional.of(() -> new ExtractionOnlySideHandler(SLOT_TARGET));
     private final LazyOptional<IItemHandler> sideItems = LazyOptional.of(() -> new ExtractionOnlySideHandler(SLOT_RANDOMIZE));
 

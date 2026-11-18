@@ -87,7 +87,9 @@ public class RadiolysisBlockEntity extends HbmFluidBlockEntity
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler(items));
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
+    private final LazyOptional<IItemHandler> externalItemHandler =
+            LazyOptional.of(() -> new AccessibleItemHandler(items));
     private final LazyOptional<IEnergyStorage> energyHandler =
             LazyOptional.of(() -> new ForgeEnergyAdapter(this, false, true));
 
@@ -262,7 +264,7 @@ public class RadiolysisBlockEntity extends HbmFluidBlockEntity
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability,
             @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? internalItemHandler : externalItemHandler).cast();
         }
         if (capability == ForgeCapabilities.ENERGY) {
             return side == Direction.DOWN ? LazyOptional.empty() : energyHandler.cast();
@@ -273,7 +275,8 @@ public class RadiolysisBlockEntity extends HbmFluidBlockEntity
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        itemHandler.invalidate();
+        internalItemHandler.invalidate();
+        externalItemHandler.invalidate();
         energyHandler.invalidate();
     }
 

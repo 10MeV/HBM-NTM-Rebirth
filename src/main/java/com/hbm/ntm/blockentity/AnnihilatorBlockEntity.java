@@ -89,7 +89,10 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
             return isItemValid(slot, stack) ? super.insertItem(slot, stack, simulate) : stack;
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
+    /** Full inventory capability for menu/internal callers (side == null only). */
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
+    /** Legacy ISidedInventory contract for pipes and other external automation. */
+    private final LazyOptional<IItemHandler> externalItemHandler = LazyOptional.of(AccessibleItemHandler::new);
 
     private String pool = DEFAULT_POOL;
     private BigInteger monitorBigInt = BigInteger.ZERO;
@@ -485,14 +488,15 @@ public class AnnihilatorBlockEntity extends HbmFluidNetworkBlockEntity
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        itemHandler.invalidate();
+        internalItemHandler.invalidate();
+        externalItemHandler.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability,
             @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? internalItemHandler : externalItemHandler).cast();
         }
         return super.getCapability(capability, side);
     }

@@ -136,7 +136,10 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
     };
     private final HbmEnergyStorage energy = new HbmEnergyStorage(CRYSTALLIZER_MAX_POWER, CRYSTALLIZER_MAX_POWER, 0L);
     private final HbmFluidTank crystallizerTank = new HbmFluidTank(HbmFluids.PEROXIDE, CRYSTALLIZER_TANK_CAPACITY);
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
+    /** Full machine inventory for menu/internal callers (side == null only). */
+    private final LazyOptional<IItemHandler> internalItemHandler = LazyOptional.of(() -> items);
+    /** Legacy ISidedInventory view for pipes and other external automation. */
+    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(AccessibleItemHandler::new);
     private final LazyOptional<IEnergyStorage> energyHandler =
             LazyOptional.of(() -> new ForgeEnergyAdapter(energy, true, false));
     private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(() ->
@@ -724,6 +727,7 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
+        internalItemHandler.invalidate();
         itemHandler.invalidate();
         energyHandler.invalidate();
         fluidHandler.invalidate();
@@ -732,7 +736,7 @@ public class ProcessingMachineBlockEntity extends BlockEntity implements MenuPro
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction side) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return itemHandler.cast();
+            return (side == null ? internalItemHandler : itemHandler).cast();
         }
         if (capability == ForgeCapabilities.ENERGY) {
             return energyHandler.cast();

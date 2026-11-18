@@ -50,7 +50,9 @@ public class RtgFurnaceBlockEntity extends BlockEntity implements MenuProvider {
             return slot >= 0 && slot < getSlots();
         }
     };
-    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new AccessibleItemHandler());
+    // A null direction is Forge's complete internal/menu inventory view, not a
+    // physical automation face. Physical sides use AccessibleItemHandler below.
+    private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> items);
     private final Map<Direction, LazyOptional<IItemHandler>> sidedItemHandlers = new EnumMap<>(Direction.class);
     private String customName;
     private int cookTime;
